@@ -73,7 +73,7 @@ Planering / Arbetsmetod
 		- Responsivitet – Mobil och Desktop
 
 
-- Git trategi: feature ranches för varje delmoment, pull requests till main eller dev när funktioner är klara 
+- Git trategi: feature ranches för varje delmoment, pull requests till main eller dev när funktioner är klara. Projektet kommer att planera och genomföra med hjälp av Kanban i GitHub Projects för att tillämpa agila arbetsmetoder och möjliggöra kontinuerlig uppföljning.
 
 
 
