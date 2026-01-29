@@ -76,6 +76,64 @@ Planering / Arbetsmetod
 - Git trategi: feature ranches för varje delmoment, pull requests till main eller dev när funktioner är klara. Projektet kommer att planera och genomföra med hjälp av Kanban i GitHub Projects för att tillämpa agila arbetsmetoder och möjliggöra kontinuerlig uppföljning.
 
 
+Kravspecifikation - Funktionalitet
+
+Webbplatsen kommer att innehålla följande funktionalitet och sektioner:
+
+Huvudfunktioner:
+
+1. 3D Navigationsmiljö
+   - En interaktiv 3D scen där användaren kan navigera med mus/tangentbord eller touch (mobil)
+   - Kamerakontroller som tillåter rotation, zoom och panning
+   - Enkel och intuitiv navigation som fungerar på både desktop och mobil
+
+2. Projektvisning
+   - Interaktiva 3D objekt i scenen som representerar olika projekt
+   - Klickbara objekt som öppnar detaljerade projektpaneler
+   - Projektpaneler som visar:
+     - Projektbeskrivning och syfte
+     - Teknisk stack som användes
+     - Bildgalleri eller visuella exempel
+     - Länkar till live-demo eller GitHub-repository
+   - Animationer när objekt väljs/interageras med
+
+3. Om mig-sektion
+   - Informationspanel som presenterar min bakgrund och kompetenser
+   - Visuell representation av mina färdigheter (UX design, Frontend, 3D modellering)
+   - Kontaktinformation och länkar till sociala medier/LinkedIn
+
+4. UI-komponenter och navigation
+   - Huvudmeny/navigationsmeny för att hoppa mellan sektioner
+   - Loading-skärm med progressindikator när 3D-modeller laddas
+   - Responsiva UI-paneler som överlagras på 3D-scenen
+   - Smooth transitions och animationer mellan olika vyer
+
+5. Responsiv design
+   - Optimerad visning för desktop (1920px och nedåt)
+   - Mobilversion med touch-kontroller för 3D-navigation
+   - Anpassad UI-layout för olika skärmstorlekar
+   - Fallback-lösningar om 3D-rendering inte stöds
+
+6. Prestanda och optimering
+   - Lazy loading av 3D-modeller för snabbare initial laddning
+   - Optimering av polygonräkning och texturstorlekar
+   - Målsättning: 60 FPS på desktop, minst 30 FPS på mobil
+   - Progressiv laddning med visuell feedback
+
+7. Interaktiva element
+   - Hover-effekter på 3D-objekt som visar att de är klickbara
+   - Animerade övergångar när projektpaneler öppnas/stängs
+   - Scroll-animationer för att synkronisera 2D-innehåll med 3D-scenen
+   - Eventuellt: Ljudeffekter för ökad immersion (valfritt)
+
+Tekniska krav:
+
+- Webbplatsen ska vara en Single Page Application (SPA)
+- Alla 3D-modeller ska vara optimerade för webben (GLTF/GLB-format)
+- Stöd för moderna webbläsare (Chrome, Firefox, Safari, Edge)
+- SEO-optimerad med meta-taggar och semantisk HTML
+- Tillgänglighet: Keyboard navigation och ARIA-labels där relevant
+
 
 Tekniker
 
