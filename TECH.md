@@ -1,6 +1,6 @@
 \##File format
 
-3D models exported from Blender using GLTF format.
+3D models exported from Blender using GLTF/.glb format.
 GL Transmission Format
 
 * Made by Khronos Group (OpenGl, WebGl, Vulkan, etc.)
@@ -22,17 +22,6 @@ YouTube:
 
 "React Three Fiber character movement"
 
-
-
-Channels:
-
-
-
-Wael Yasmina — does solid Three.js project tutorials
-
-Irradiance — good React Three Fiber content
-
-SimonDev — excellent game/character movement in Three.js
 
 
 
