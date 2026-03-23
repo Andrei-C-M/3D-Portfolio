@@ -1,3 +1,14 @@
+## Checkpoint (backup)
+
+- **Git commit:** `checkpoint: island scene, water shader, shadows, lighting (before character)`
+- **Tag:** `checkpoint-before-character` — restore with: `git checkout checkpoint-before-character` (detached) or `git reset --hard checkpoint-before-character` on branch `dev` (only if you want to discard later work)
+
+## Next: character & camera
+
+- Import `character-male-b.glb` (also in `assets/`, copy to `public/assets/` when used in app).
+- Click-to-move in the scene (raycast ground → target position).
+- Isometric-style camera follow (fixed angle, tracks character).
+
 \##File format
 
 3D models exported from Blender using GLTF/.glb format.
