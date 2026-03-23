@@ -30,7 +30,31 @@ function Loader() {
  */
 export default function App() {
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#0a0a0f' }}>
+    <div
+      style={{
+        width: '100vw',
+        height: '100vh',
+        background: '#0a0a0f',
+        position: 'relative',
+        cursor: 'crosshair',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          color: '#ccc',
+          fontSize: 14,
+          fontFamily: 'system-ui, sans-serif',
+          pointerEvents: 'none',
+          textAlign: 'center',
+        }}
+      >
+        Tap / click land to move · Two-finger drag: rotate · Middle mouse: rotate (desktop)
+      </div>
       <Suspense fallback={<Loader />}>
         <Canvas
           shadows
@@ -38,7 +62,7 @@ export default function App() {
           gl={{
             antialias: true,
             outputColorSpace: SRGBColorSpace,
-            toneMappingExposure: 0.72,
+            toneMappingExposure: 0.82,
           }}
           onCreated={({ gl }) => {
             gl.shadowMap.type = PCFSoftShadowMap
