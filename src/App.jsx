@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { PCFSoftShadowMap, SRGBColorSpace } from 'three'
 import Scene from './Scene'
 
 /** Shown while the GLB and other async assets are loading (Suspense fallback) */
@@ -34,7 +35,14 @@ export default function App() {
         <Canvas
           shadows
           camera={{ position: [4, 3, 6], fov: 45 }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            outputColorSpace: SRGBColorSpace,
+            toneMappingExposure: 0.72,
+          }}
+          onCreated={({ gl }) => {
+            gl.shadowMap.type = PCFSoftShadowMap
+          }}
         >
           <Scene />
         </Canvas>

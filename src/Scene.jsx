@@ -1,75 +1,71 @@
-import { useEffect, useRef, useMemo } from 'react'
-import { Environment, OrbitControls, useGLTF } from '@react-three/drei'
-import { Box3, Vector3 } from 'three'
+import { useEffect, useRef } from 'react'
+import { Environment, OrbitControls } from '@react-three/drei'
+import Island from './Island'
 
 /**
- * House: loads the GLB model, recenters it at the origin, scales it to a
- * reasonable size, and rests its base on the grid.
- */
-function House() {
-  const { scene } = useGLTF('/assets/house.glb')
-  const groupRef = useRef()
-
-  // Compute bounding box once: re-center horizontally and keep base on grid
-  const { scale } = useMemo(() => {
-    const box = new Box3().setFromObject(scene)
-    const center = new Vector3()
-    const size = new Vector3()
-    box.getCenter(center)
-    box.getSize(size)
-
-    // Move model so its bottom sits at y = 0 and it's centered in X/Z
-    scene.position.x -= center.x
-    scene.position.z -= center.z
-    scene.position.y -= box.min.y
-
-    // Scale model so its largest dimension is about 4 units
-    const maxDim = Math.max(size.x, size.y, size.z) || 1
-    const desiredSize = 4
-    const s = desiredSize / maxDim
-
-    return { scale: s }
-  }, [scene])
-
-  // Apply the computed scale to the whole group
-  useEffect(() => {
-    if (groupRef.current) {
-      groupRef.current.scale.set(scale, scale, scale)
-    }
-  }, [scale])
-
-  return (
-    <group ref={groupRef} position={[0, 0, 0]}>
-      <primitive object={scene} />
-    </group>
-  )
-}
-
-/**
- * Scene: lights, ground plane, house, and orbit controls.
+ * Scene: lights, ground plane, island model, and orbit controls.
  */
 export default function Scene() {
+  const sunRef = useRef(null)
+
+  // Widen the directional light’s shadow frustum + sharper map (defaults are tiny / low-res)
+  useEffect(() => {
+    const L = sunRef.current
+    if (!L?.shadow) return
+    L.shadow.mapSize.set(2048, 2048)
+    L.shadow.bias = -0.00025
+    L.shadow.normalBias = 0.045
+    const cam = L.shadow.camera
+    cam.near = 0.5
+    cam.far = 120
+    cam.left = -50
+    cam.right = 50
+    cam.top = 50
+    cam.bottom = -50
+    cam.updateProjectionMatrix()
+  }, [])
+
   return (
     <>
-      {/* Simple green ground plane that looks like grass */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]}>
+      {/* Ground receives shadows from the island */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[40, 40]} />
         <meshStandardMaterial color="#3b7d2a" />
       </mesh>
 
-      {/* Soft sky fill light */}
-      <ambientLight intensity={0.5} />
-      {/* Sunlight: warm directional light from above/right */}
+      {/* Low fill — high ambient + IBL hides shadow contrast */}
+      <ambientLight intensity={0.18} />
+      <hemisphereLight
+        skyColor="#87ceeb"
+        groundColor="#2a1f14"
+        intensity={0.28}
+      />
+      {/* Target must be in the scene graph or directional shadows won’t update correctly */}
       <directionalLight
-        position={[10, 15, 5]}
-        intensity={1.5}
-        color="#ffe9c4"
+        ref={sunRef}
+        position={[18, 28, 14]}
+        intensity={1.1}
+        color="#fff8ed"
         castShadow
+      >
+        <object3D position={[0, 0, 0]} attach="target" />
+      </directionalLight>
+      <directionalLight
+        position={[-8, 6, -6]}
+        intensity={0.12}
+        color="#b8d4f0"
+        castShadow={false}
+      />
+      <directionalLight
+        position={[-4, 10, -12]}
+        intensity={0.1}
+        color="#ffe8c8"
+        castShadow={false}
       />
 
-      <Environment preset="sunset" />
+      <Environment preset="sunset" environmentIntensity={0.38} />
 
-      <House />
+      <Island />
 
       <OrbitControls
         makeDefault
