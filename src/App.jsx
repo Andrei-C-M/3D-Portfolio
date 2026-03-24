@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PCFSoftShadowMap, SRGBColorSpace } from 'three'
+import { PanelProvider } from './context/PanelContext.jsx'
+import SidePanel from './SidePanel.jsx'
 import Scene from './Scene'
 
 /** Shown while the GLB and other async assets are loading (Suspense fallback) */
@@ -30,47 +32,50 @@ function Loader() {
  */
 export default function App() {
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100vh',
-        background: '#0a0a0f',
-        position: 'relative',
-        cursor: 'crosshair',
-      }}
-    >
+    <PanelProvider>
       <div
         style={{
-          position: 'absolute',
-          bottom: 16,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          color: '#ccc',
-          fontSize: 14,
-          fontFamily: 'system-ui, sans-serif',
-          pointerEvents: 'none',
-          textAlign: 'center',
+          width: '100vw',
+          height: '100vh',
+          background: '#0a0a0f',
+          position: 'relative',
+          cursor: 'crosshair',
         }}
       >
-        Tap / click land to move · Two-finger drag: rotate · Middle mouse: rotate (desktop)
-      </div>
-      <Suspense fallback={<Loader />}>
-        <Canvas
-          shadows
-          camera={{ position: [4, 3, 6], fov: 45 }}
-          gl={{
-            antialias: true,
-            outputColorSpace: SRGBColorSpace,
-            toneMappingExposure: 0.82,
-          }}
-          onCreated={({ gl }) => {
-            gl.shadowMap.type = PCFSoftShadowMap
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            color: '#ccc',
+            fontSize: 14,
+            fontFamily: 'system-ui, sans-serif',
+            pointerEvents: 'none',
+            textAlign: 'center',
           }}
         >
-          <Scene />
-        </Canvas>
-      </Suspense>
-    </div>
+          Tap / click land to move · Two-finger drag: rotate · Middle mouse: rotate (desktop)
+        </div>
+        <Suspense fallback={<Loader />}>
+          <Canvas
+            shadows
+            camera={{ position: [4, 3, 6], fov: 45 }}
+            gl={{
+              antialias: true,
+              outputColorSpace: SRGBColorSpace,
+              toneMappingExposure: 0.82,
+            }}
+            onCreated={({ gl }) => {
+              gl.shadowMap.type = PCFSoftShadowMap
+            }}
+          >
+            <Scene />
+          </Canvas>
+        </Suspense>
+        <SidePanel />
+      </div>
+    </PanelProvider>
   )
 }

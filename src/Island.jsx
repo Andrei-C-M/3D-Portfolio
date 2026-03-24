@@ -12,21 +12,68 @@ import {
   Vector3,
 } from 'three'
 import { ISLAND_GLB_URL } from './islandConfig.js'
-import { getUrlForInteractiveMeshName } from './interactionConfig.js'
+import { getPanelIdForMeshName } from './interactionConfig.js'
 import { getSpawnNearSmallBoat } from './spawnPoint.js'
 import { Water } from 'three/examples/jsm/objects/Water.js'
 
 /**
  * Book / LinkedIn / GitHub / Profile — name must match interactionConfig (any Object3D, not only meshes:
  * Blender often uses Groups/empties named "Book" with mesh children named "Cube.001").
+ *
+ * Links must live on actual mesh geometry only — never on the parent Group. Otherwise raycasts that
+ * hit terrain or huge helper planes under the same empty still walk up and open the URL. Huge
+ * child meshes (world AABB max edge) are skipped so stray planes/colliders don’t get the link.
  */
+const MAX_INTERACTIVE_MESH_EXTENT = 2.5
+
+const _interactiveMeshSize = new Vector3()
+
 function tagInteractiveMeshes(scene) {
   scene.traverse((o) => {
+    delete o.userData.externalUrl
+    delete o.userData.interactionPanel
+  })
+
+  scene.updateMatrixWorld(true)
+
+  function tryAssignInteractiveMesh(mesh, { externalUrl, interactionPanel }) {
+    if (!mesh.isMesh || !mesh.geometry) return
+    const box = new Box3().setFromObject(mesh)
+    if (box.isEmpty()) return
+    box.getSize(_interactiveMeshSize)
+    if (
+      Math.max(
+        _interactiveMeshSize.x,
+        _interactiveMeshSize.y,
+        _interactiveMeshSize.z,
+      ) > MAX_INTERACTIVE_MESH_EXTENT
+    ) {
+      return
+    }
+    mesh.userData.isInteractive = true
+    if (typeof externalUrl === 'string' && externalUrl.length > 0) {
+      mesh.userData.externalUrl = externalUrl
+    }
+    if (typeof interactionPanel === 'string' && interactionPanel.length > 0) {
+      mesh.userData.interactionPanel = interactionPanel
+    }
+  }
+
+  scene.traverse((o) => {
     if (!o.name) return
-    const url = getUrlForInteractiveMeshName(o.name)
-    if (url === null) return
+    const panelId = getPanelIdForMeshName(o.name)
+    if (panelId === null) return
     o.userData.isInteractive = true
-    if (url.length > 0) o.userData.externalUrl = url
+
+    if (o.isMesh && o.geometry) {
+      tryAssignInteractiveMesh(o, { interactionPanel: panelId })
+      return
+    }
+
+    o.traverse((child) => {
+      if (child === o) return
+      tryAssignInteractiveMesh(child, { interactionPanel: panelId })
+    })
   })
 }
 

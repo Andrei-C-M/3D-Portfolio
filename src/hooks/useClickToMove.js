@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useThree } from '@react-three/fiber'
 import { Raycaster, Vector2 } from 'three'
+import { usePanel } from '../context/PanelContext.jsx'
 
 function findExternalUrl(object) {
   let o = object
@@ -13,12 +14,27 @@ function findExternalUrl(object) {
   return null
 }
 
+function findInteractionPanel(object) {
+  let o = object
+  while (o) {
+    if (
+      typeof o.userData?.interactionPanel === 'string' &&
+      o.userData.interactionPanel.length > 0
+    ) {
+      return o.userData.interactionPanel
+    }
+    o = o.parent
+  }
+  return null
+}
+
 /**
  * On canvas click, raycast into the scene and write the hit point into targetRef (Vector3).
- * Skips water and character meshes. Objects with `userData.externalUrl` open in a new tab.
+ * `interactionPanel` opens the side drawer; `externalUrl` opens a new tab.
  */
 export function useClickToMove(targetRef) {
   const { camera, gl, scene } = useThree()
+  const { openPanel } = usePanel()
   const raycaster = useMemo(() => new Raycaster(), [])
   const pointer = useMemo(() => new Vector2(), [])
 
@@ -34,6 +50,11 @@ export function useClickToMove(targetRef) {
 
       for (const h of hits) {
         if (!h.object.visible) continue
+        const panelId = findInteractionPanel(h.object)
+        if (panelId) {
+          openPanel(panelId)
+          return
+        }
         const url = findExternalUrl(h.object)
         if (url && url.length > 0) {
           window.open(url, '_blank', 'noopener,noreferrer')
@@ -55,5 +76,5 @@ export function useClickToMove(targetRef) {
 
     el.addEventListener('click', onClick)
     return () => el.removeEventListener('click', onClick)
-  }, [camera, gl, scene, raycaster, pointer, targetRef])
+  }, [camera, gl, scene, raycaster, pointer, targetRef, openPanel])
 }
