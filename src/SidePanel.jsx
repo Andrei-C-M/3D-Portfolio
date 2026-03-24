@@ -20,10 +20,9 @@ const PANEL_COPY = {
   book: {
     hero: { kind: 'image', src: '/assets/book.jpg', alt: 'Book cover' },
     title: 'Book',
-    subtitle: 'Placeholder — add your title and pitch for SEO and AEO in 2026.',
+    subtitle: 'SEO, AEO, and the future of search.',
     paragraphs: [
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-      'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
+      'In 2026, I wrote a book on SEO and AEO that explores the future of search and how to optimize for both traditional engines and AI-powered assistants.',
     ],
     footerLink: {
       label: 'View on Amazon (UK)',
@@ -33,10 +32,9 @@ const PANEL_COPY = {
   linkedin: {
     hero: { kind: 'gradient', variant: 'linkedin', label: 'LinkedIn' },
     title: 'LinkedIn',
-    subtitle: 'Placeholder — connect professionally and see selected experience.',
+    subtitle: 'Professional updates and collaboration.',
     paragraphs: [
-      'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.',
-      'Similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.',
+      "Want to connect professionally? I'm active on LinkedIn, where I share updates, collaborate with others, and keep the conversation going. I'd love to connect.",
     ],
     linkedInUrl: LINKEDIN_URL,
     footerLink: {
@@ -47,10 +45,9 @@ const PANEL_COPY = {
   github: {
     hero: { kind: 'gradient', variant: 'github', label: 'GitHub' },
     title: 'GitHub',
-    subtitle: 'Placeholder — open-source work, experiments, and code samples.',
+    subtitle: 'Projects, learning, and where the code lives.',
     paragraphs: [
-      'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.',
-      'Omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.',
+      "If you're curious about what I've been creating lately, my GitHub is the best place to look. It's where I share my projects, document my learning, and push myself to grow as a developer.",
     ],
     footerLink: {
       label: 'github.com/Andrei-C-M',
@@ -60,10 +57,9 @@ const PANEL_COPY = {
   profile: {
     hero: { kind: 'image', src: '/assets/profile.jpg', alt: 'Profile' },
     title: 'Profile',
-    subtitle: 'Placeholder — short bio and how to reach you.',
+    subtitle: 'Visual communication, 3D, and frontend development.',
     paragraphs: [
-      'Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.',
-      'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.',
+      "My name is Andrei Manea, and my professional background spans over 10 years in visual communication - designing layouts for newspapers, magazines, books, commercials, and posters. I also spent five years working with 3D modeling, and I'm now transitioning from 3ds Max to Blender. I am a frontend developer with a focus on product design and SEO/AEO. You can find more information about me below.",
     ],
     footerLink: {
       label: 'andreimanea.framer.website',
