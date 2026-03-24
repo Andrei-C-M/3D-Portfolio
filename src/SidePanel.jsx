@@ -1,6 +1,11 @@
 import { useEffect } from 'react'
 import { usePanel } from './context/PanelContext.jsx'
 
+const BOOK_URL = 'https://www.amazon.co.uk/dp/B0GRB1P394'
+const GITHUB_URL = 'https://github.com/Andrei-C-M'
+const LINKEDIN_URL = 'https://www.linkedin.com/in/andrei-manea-570669277/'
+const PORTFOLIO_URL = 'https://andreimanea.framer.website/'
+
 const PANEL_COPY = {
   about: {
     hero: { kind: 'image', src: '/assets/profile.jpg', alt: 'Profile' },
@@ -20,6 +25,10 @@ const PANEL_COPY = {
       'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
       'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
     ],
+    footerLink: {
+      label: 'View on Amazon (UK)',
+      href: BOOK_URL,
+    },
   },
   linkedin: {
     hero: { kind: 'gradient', variant: 'linkedin', label: 'LinkedIn' },
@@ -29,6 +38,11 @@ const PANEL_COPY = {
       'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.',
       'Similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.',
     ],
+    linkedInUrl: LINKEDIN_URL,
+    footerLink: {
+      label: 'linkedin.com/in/andrei-manea-570669277',
+      href: LINKEDIN_URL,
+    },
   },
   github: {
     hero: { kind: 'gradient', variant: 'github', label: 'GitHub' },
@@ -38,6 +52,10 @@ const PANEL_COPY = {
       'Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est.',
       'Omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.',
     ],
+    footerLink: {
+      label: 'github.com/Andrei-C-M',
+      href: GITHUB_URL,
+    },
   },
   profile: {
     hero: { kind: 'image', src: '/assets/profile.jpg', alt: 'Profile' },
@@ -47,6 +65,10 @@ const PANEL_COPY = {
       'Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.',
       'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.',
     ],
+    footerLink: {
+      label: 'andreimanea.framer.website',
+      href: PORTFOLIO_URL,
+    },
   },
 }
 
@@ -175,6 +197,37 @@ export default function SidePanel() {
                   {p}
                 </p>
               ))}
+              {content.linkedInUrl && (
+                <p
+                  style={{
+                    fontSize: 15,
+                    lineHeight: 1.65,
+                    marginBottom: 16,
+                    color: '#d4d4d4',
+                  }}
+                >
+                  Connect on{' '}
+                  <a
+                    href={content.linkedInUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    linkedin.com/in/andrei-manea-570669277
+                  </a>
+                  .
+                </p>
+              )}
+              {content.footerLink && (
+                <p className="side-panel-footer-link">
+                  <a
+                    href={content.footerLink.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {content.footerLink.label}
+                  </a>
+                </p>
+              )}
             </>
           )}
         </div>
