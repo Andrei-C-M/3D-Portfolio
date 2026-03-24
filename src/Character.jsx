@@ -3,14 +3,10 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { Box3, LoopRepeat, Raycaster, Vector3 } from 'three'
 
-/** 50% slower than previous 3.2 */
-const MOVE_SPEED = 1.6
-/** ~10% of previous visual scale (was 1.15 / maxDim) */
-const CHARACTER_SCALE_FACTOR = 0.1
-/** Inflate obstacle AABB so we can’t clip through trunks / walls (keep modest for gameplay feel) */
-const CHARACTER_RADIUS = 0.12
-/** Sample point height (meters above feet) for overlap tests */
-const COLLISION_HEIGHT = 0.32
+const MOVE_SPEED = 1.12
+const CHARACTER_SCALE_FACTOR = 0.08
+const CHARACTER_RADIUS = 0.096
+const COLLISION_HEIGHT = 0.256
 
 function findAction(actions, names, regex) {
   const key = names.find((n) => regex.test(n))

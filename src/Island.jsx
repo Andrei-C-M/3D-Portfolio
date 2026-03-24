@@ -3,8 +3,10 @@ import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import {
   Box3,
+  EdgesGeometry,
+  LineBasicMaterial,
+  LineSegments,
   PlaneGeometry,
-  PointLight,
   RepeatWrapping,
   TextureLoader,
   Vector3,
@@ -37,63 +39,139 @@ function hasInteractiveParent(o, root) {
   return false
 }
 
-/** Soft point lights on interactive props (parented to scaled island group) */
-function addInteractionHintLights(scene, islandGroup) {
-  if (!islandGroup || scene.userData.interactionHintLightsAdded) return
-  scene.userData.interactionHintLightsAdded = true
+/** Pulsing yellow edge outlines on interactive props (Book, LinkedIn, GitHub, Profile) */
+function addInteractionOutlines(scene) {
+  if (scene.userData.interactionOutlinesAdded) return
+  scene.userData.interactionOutlinesAdded = true
 
-  const box = new Box3()
-  const worldCenter = new Vector3()
-  const localPos = new Vector3()
-  const upLocal = new Vector3(0, 0.22, 0)
-  const lights = []
+  const outlineMaterials = []
 
   scene.updateMatrixWorld(true)
-  islandGroup.updateMatrixWorld(true)
 
+  const roots = []
   scene.traverse((o) => {
     if (!o.userData.isInteractive) return
-    // One light per prop: skip mesh if parent Group is already interactive (same glow)
     if (hasInteractiveParent(o, scene)) return
-
-    box.setFromObject(o)
-    if (box.isEmpty()) return
-    box.getCenter(worldCenter)
-    localPos.copy(worldCenter)
-    islandGroup.worldToLocal(localPos)
-
-    const light = new PointLight(0xffe8cc, 1.05, 3.4, 2)
-    light.position.copy(localPos).add(upLocal)
-    light.name = 'interaction-hint-light'
-    light.userData.isInteractionHintLight = true
-    islandGroup.add(light)
-    lights.push(light)
+    roots.push(o)
   })
 
-  scene.userData.interactionHintLights = lights
+  for (const root of roots) {
+    root.traverse((o) => {
+      if (!o.isMesh || !o.geometry || o.userData.interactionOutlineAttached) return
+      o.userData.interactionOutlineAttached = true
+
+      const edges = new EdgesGeometry(o.geometry, 22)
+      const mat = new LineBasicMaterial({
+        color: 0xffcc33,
+        transparent: true,
+        opacity: 0.95,
+        depthTest: true,
+      })
+      outlineMaterials.push(mat)
+
+      const lines = new LineSegments(edges, mat)
+      lines.name = 'interaction-outline'
+      lines.userData.isInteractionOutline = true
+      lines.renderOrder = 10
+      o.add(lines)
+    })
+  }
+
+  scene.userData.interactionOutlineMaterials = outlineMaterials
 }
 
 /** World-space width/depth for water; keep in sync with Scene ground plane (~40) + small margin */
 export const WATER_WORLD_EXTENT = 42
 
-/** Mark trees, buildings, props — not terrain/water/grass (walkable ground). */
+/** True if mesh and ancestors are visible (hidden Blender objects must not leave ghost collision). */
+function isMeshVisibleInHierarchy(mesh) {
+  let o = mesh
+  while (o) {
+    if (o.visible === false) return false
+    o = o.parent
+  }
+  return true
+}
+
+/**
+ * Mark trees, buildings, props — not terrain/water/grass (walkable ground).
+ * Omit `leaf`: foliage submeshes often have loose AABBs and duplicate old positions after moving trees.
+ */
 function isObstacleMesh(mesh) {
   const n = mesh.name || ''
   if (/water|terrain|sand|ground|grass|sea|ocean|beach/i.test(n)) return false
   if (mesh.isWater) return false
-  return /tree|palm|trunk|leaf|house|home|cottage|cannon|mast|sail|ship|boat|rowboat|wreck|rock|crate|barrel|fence|pier|dock|lamp|plank|campfire|fire|deck|rail|wheel|anchor/i.test(
+  return /tree|palm|trunk|house|home|cottage|cannon|mast|sail|ship|boat|rowboat|wreck|rock|crate|barrel|fence|pier|dock|lamp|plank|campfire|fire|deck|rail|wheel|anchor/i.test(
     n,
   )
 }
 
+/** Palm meshes: tight trunk box so canopy doesn’t block a huge area (world units after island scale). */
+const PALM_COLLISION_MAX_FOOTPRINT = 0.52
+const PALM_COLLISION_MAX_HEIGHT = 2.8
+
+/** House / cottage: shrink full AABB by 20% (×0.8) around center so walls feel less “puffy”. */
+const HOUSE_COLLISION_SCALE = 0.8
+
+/**
+ * World-space AABB for character collision.
+ * Palm: small trunk box; house/home/cottage: 20% tighter than bounds; else full bounds.
+ */
+function computeObstacleBox(mesh) {
+  const full = new Box3().setFromObject(mesh)
+  const n = mesh.name || ''
+  if (/palm/i.test(n)) {
+    const center = new Vector3()
+    const size = new Vector3()
+    full.getCenter(center)
+    full.getSize(size)
+
+    const halfFoot = Math.min(size.x, size.z, PALM_COLLISION_MAX_FOOTPRINT) * 0.5
+    const h = Math.min(size.y, PALM_COLLISION_MAX_HEIGHT)
+    const min = new Vector3(center.x - halfFoot, full.min.y, center.z - halfFoot)
+    const max = new Vector3(center.x + halfFoot, full.min.y + h, center.z + halfFoot)
+    return new Box3(min, max)
+  }
+
+  if (/house|home|cottage/i.test(n)) {
+    const center = new Vector3()
+    const size = new Vector3()
+    full.getCenter(center)
+    full.getSize(size)
+    size.multiplyScalar(HOUSE_COLLISION_SCALE)
+    const hx = size.x * 0.5
+    const hy = size.y * 0.5
+    const hz = size.z * 0.5
+    return new Box3(
+      new Vector3(center.x - hx, center.y - hy, center.z - hz),
+      new Vector3(center.x + hx, center.y + hy, center.z + hz),
+    )
+  }
+
+  return full
+}
+
+const _obstacleSizeCheck = new Vector3()
+
 /** World-space AABB per mesh for character collision (static island). */
 function tagObstacles(scene) {
   scene.updateMatrixWorld(true)
+  // Clear previous tags so renamed/removed meshes don’t keep stale collision after GLB updates.
+  scene.traverse((o) => {
+    if (!o.isMesh) return
+    delete o.userData.obstacle
+    delete o.userData.obstacleBox
+  })
+
   const list = []
   scene.traverse((o) => {
-    if (!o.isMesh || !isObstacleMesh(o)) return
+    if (!o.isMesh || !o.geometry || !isMeshVisibleInHierarchy(o)) return
+    if (!isObstacleMesh(o)) return
+    const box = computeObstacleBox(o)
+    if (box.isEmpty()) return
+    box.getSize(_obstacleSizeCheck)
+    if (Math.max(_obstacleSizeCheck.x, _obstacleSizeCheck.y, _obstacleSizeCheck.z) < 1e-4) return
     o.userData.obstacle = true
-    const box = new Box3().setFromObject(o)
     o.userData.obstacleBox = box
     list.push(o)
   })
@@ -229,7 +307,7 @@ export default function Island() {
     groupRef.current.updateMatrixWorld(true)
     tagObstacles(scene)
     tagInteractiveMeshes(scene)
-    addInteractionHintLights(scene, groupRef.current)
+    addInteractionOutlines(scene)
     rootScene.userData.obstacleMeshes = scene.userData.obstacleMeshes || []
     const spawn = getSpawnNearSmallBoat(scene)
     rootScene.userData.characterSpawn = spawn ? spawn.clone() : null
@@ -242,18 +320,17 @@ export default function Island() {
 
   // Animate water shader — multiply delta so ripples move slowly
   const WATER_TIME_SCALE = 0.12
-  // Subtle pulse on interactive prop lights
   useFrame((state, delta) => {
     const w = scene.userData.waterInstance ?? scene.getObjectByName('water')
     if (w?.material?.uniforms?.time) {
       w.material.uniforms.time.value += delta * WATER_TIME_SCALE
     }
 
-    const lights = scene.userData.interactionHintLights
-    if (!lights?.length) return
+    const mats = scene.userData.interactionOutlineMaterials
+    if (!mats?.length) return
     const t = state.clock.elapsedTime
-    lights.forEach((light, i) => {
-      light.intensity = 0.75 + 0.45 * Math.sin(t * 2.1 + i * 0.85)
+    mats.forEach((mat, i) => {
+      mat.opacity = 0.42 + 0.52 * (0.5 + 0.5 * Math.sin(t * 2.4 + i * 0.6))
     })
   })
 
