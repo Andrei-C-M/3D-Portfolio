@@ -1,0 +1,172 @@
+/* Reset margins/padding and make all elements use border-box for layout */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* App and 3D canvas fill the whole viewport; no scrollbar for the scene */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+}
+
+/*
+ * Side drawer (SidePanel.jsx): slides from the right, sits above the canvas via z-index.
+ * On phones / tablets we go full width + height; see the @media block at the bottom.
+ */
+.side-panel-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 101;
+  width: min(480px, 92vw);
+  height: 100vh;
+  height: 100dvh;
+  background: #0a0a0a;
+  color: #e8e8e8;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.side-panel-drawer.side-panel-drawer--open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.side-panel-hero {
+  width: 100%;
+  height: 300px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-bottom: 1px solid #222;
+  background: #111;
+}
+
+.side-panel-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+/* Book panel: taller strip (~2× default) + full cover visible (letterboxed) */
+.side-panel-hero--book {
+  height: 600px;
+}
+
+.side-panel-hero-img--book {
+  object-fit: contain;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+.side-panel-hero-gradient {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.side-panel-hero-gradient--github {
+  background: linear-gradient(145deg, #161b22 0%, #21262d 45%, #30363d 100%);
+}
+
+.side-panel-hero-gradient--linkedin {
+  background: linear-gradient(145deg, #0a1e2e 0%, #0a66c2 50%, #004182 100%);
+}
+
+.side-panel-close {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 2px;
+  background: #fff;
+  color: #0a0a0a;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 28px 40px 32px;
+  font-family: system-ui, sans-serif;
+  -webkit-overflow-scrolling: touch;
+}
+
+.side-panel-body a {
+  color: #8ec5ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.side-panel-body a:hover {
+  color: #c5e0ff;
+}
+
+.side-panel-footer-link {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #2a2a2a;
+  font-size: 15px;
+}
+
+@media (max-width: 768px) {
+  .side-panel-drawer {
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    height: 100svh;
+    box-shadow: none;
+  }
+
+  .side-panel-close {
+    left: auto;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    top: max(12px, env(safe-area-inset-top, 0px));
+    transform: none;
+  }
+
+  .side-panel-hero {
+    height: min(48vh, 360px);
+  }
+
+  .side-panel-hero--book {
+    height: min(76vh, 600px);
+  }
+
+  .side-panel-body {
+    padding: 20px 18px 28px;
+    padding-bottom: max(28px, env(safe-area-inset-bottom, 0px));
+  }
+}

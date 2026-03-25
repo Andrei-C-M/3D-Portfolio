@@ -1,0 +1,14 @@
+# Dependencies & build
+node_modules/
+dist/
+*.local
+
+# Vite
+.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Source / duplicate models at repo root (runtime files live in public/assets/)
+/assets/
