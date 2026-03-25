@@ -26,8 +26,8 @@ export default function Scene() {
       const L = sunRef.current
       if (!L?.shadow) return false
       L.shadow.mapSize.set(4096, 4096)
-      L.shadow.bias = -0.00025
-      L.shadow.normalBias = 0.03
+      L.shadow.bias = -0.00012
+      L.shadow.normalBias = 0.008
       const cam = L.shadow.camera
       cam.near = 0.5
       cam.far = 120
@@ -55,22 +55,22 @@ export default function Scene() {
       </mesh>
 
       {/* Ambient + hemispheric fill so nothing is pure black; its kept low so sun shadows show */}
-      <ambientLight intensity={0.06} />
+      <ambientLight intensity={0.075} />
       <hemisphereLight
-        skyColor="#a8c8e8"
-        groundColor="#2a1f14"
-        intensity={0.14}
+        skyColor="#d2ddf0"
+        groundColor="#3a2818"
+        intensity={0.17}
       />
       {/* Main sun: orthographic/isometric shadow camera for crisp contact shadows on the island */}
       <directionalLight
         ref={sunRef}
         position={[18, 28, 14]}
-        intensity={1.45}
-        color="#fff8ed"
+        intensity={1.78}
+        color="#fff0d4"
         castShadow
         shadow-mapSize={[4096, 4096]}
-        shadow-bias={-0.00025}
-        shadow-normalBias={0.03}
+        shadow-bias={-0.00012}
+        shadow-normalBias={0.008}
       >
         <orthographicCamera
           attach="shadow-camera"
@@ -80,23 +80,32 @@ export default function Scene() {
       </directionalLight>
       <directionalLight
         position={[-8, 6, -6]}
-        intensity={0.12}
-        color="#b8d4f0"
+        intensity={0.08}
+        color="#c8d8e8"
         castShadow={false}
       />
       <directionalLight
         position={[-4, 10, -12]}
-        intensity={0.1}
-        color="#ffe8c8"
+        intensity={0.08}
+        color="#f0e0c8"
         castShadow={false}
       />
+      {/* Top-down fill: parallel rays along -Y across the island (no extra shadow map for this light, only main sun handles shadows). */}
+      <directionalLight
+        position={[0, 48, 0]}
+        intensity={0.38}
+        color="#fff6ec"
+        castShadow={false}
+      >
+        <object3D position={[0, 0, 0]} attach="target" />
+      </directionalLight>
 
       {/* HDR environment map: lights the scene and draws the sky; intensity kept moderate. I might change this later, but this hdri map was the best I could find that fit the island scene */}
       <Environment
         files="/assets/qwantani_sunset_puresky_1k.hdr"
         background
-        environmentIntensity={0.22}
-        backgroundIntensity={0.88}
+        environmentIntensity={0.3}
+        backgroundIntensity={0.78}
       />
 
       <Island />

@@ -4,21 +4,45 @@ const _box = /* @__PURE__ */ new Box3()
 const _size = /* @__PURE__ */ new Vector3()
 const _toward = /* @__PURE__ */ new Vector3()
 
+const BOAT_ROW_LARGE = 'boat-row-large'
+/** Horizontal nudge from the boat bbox center toward island center (sand beside the hull). */
+const SHORE_OFFSET = 0.32
+
+/**
+ * Blender often exports `boat-row-large` as a Group (empty parent) with child meshes that are  not `isMesh`.
+ */
+function findBoatRowLargeRoot(islandScene) {
+  if (!islandScene) return null
+
+  let exact = null
+  let fuzzy = null
+  islandScene.traverse((o) => {
+    const n = (o.name || '').trim().toLowerCase()
+    if (n === BOAT_ROW_LARGE) exact = o
+    else if (!fuzzy && n.includes(BOAT_ROW_LARGE)) fuzzy = o
+  })
+  if (exact) return exact
+  if (fuzzy) return fuzzy
+
+  const byName = islandScene.getObjectByName(BOAT_ROW_LARGE)
+  if (byName) return byName
+
+  return null
+}
+
 /**
  * Picks a starting position for the character in the GLB scene.
  *
- * `Box3().setFromObject(mesh)` is Threejs helper for an axis-aligned bounding box around
- * anything in the scene 
- * Moved the spawn point slightly toward the island center so youthe character does not spawn inside a prop.
+ * Prefers the object named `boat-row-large` (Blender mesh name). Spawns near the boat, slightly toward the island center.
  */
 export function getSpawnNearSmallBoat(islandScene) {
   if (!islandScene) return null
 
   islandScene.updateMatrixWorld(true)
 
-  /** Prefer the mesh Blender named exactly `boat-row-large` if it exists, we use it to aproximate the spawn point*/
-  let mesh = islandScene.getObjectByName('boat-row-large')
-  if (!mesh || !mesh.isMesh) {
+  let mesh = findBoatRowLargeRoot(islandScene)
+
+  if (!mesh) {
     let best = null
     let bestVol = Infinity
     islandScene.traverse((o) => {
@@ -45,9 +69,9 @@ export function getSpawnNearSmallBoat(islandScene) {
 
   _toward.set(-spawn.x, 0, -spawn.z)
   if (_toward.lengthSq() > 1e-4) {
-    _toward.normalize().multiplyScalar(1.6)
+    _toward.normalize().multiplyScalar(SHORE_OFFSET)
   } else {
-    _toward.set(1.6, 0, 0)
+    _toward.set(SHORE_OFFSET, 0, 0)
   }
   spawn.add(_toward)
 

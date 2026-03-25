@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useAnimations, useGLTF } from '@react-three/drei'
+import { ContactShadows, useAnimations, useGLTF } from '@react-three/drei'
 import { Box3, LoopRepeat, Raycaster, Vector3 } from 'three'
 
 /** How fast the character slides on XZ axis toward the click target (world units/second). */
@@ -27,27 +27,48 @@ function isNonWalkableGroundSurface(object) {
   if (object.userData.obstacle) return true
   const n = (object.name || '').toLowerCase()
   if (/water|terrain|sand|ground|grass|sea|ocean|beach|island|path/i.test(n)) return false
+  /* Terrain rock chunks are walkable; do not match plain "rock" or it hits rocks-sand / rocks-a. */
+  if (/rocks-sand|rocks-a|rocks-b|rocks-c/i.test(n)) return false
   return /tree|palm|trunk|leaf|leaves|frond|branch|canopy|bark|vine|pine|fir|bush|hedge|house|home|cottage|cannon|mast|sail|ship|boat|rowboat|wreck|rock|crate|barrel|fence|pier|dock|lamp|plank|campfire|fire|deck|rail|wheel|anchor|book|github|linkedin|giraffe/i.test(
     n,
   )
 }
 
 /**
+ * True for meshes that are actual island ground / water in our GLBs (not porch props, rocks as props, etc.).
+ * New exports often add extra geometry above the sand; we prefer these names when raycasting down.
+ */
+function isTerrainGroundMesh(object) {
+  const n = (object.name || '').toLowerCase()
+  if (/water|terrain|sand|beach|ocean|sea|island|path|ground\b/i.test(n)) return true
+  if (/patch-|foliage|grass-patch|grass-plant|grass\.|rocks-sand|rocks-a|rocks-b|rocks-c|patch-sand|patch-grass|patch-sand-foliage/i.test(n))
+    return true
+  if (/^plane\.00|^mesh\.002$/i.test(n)) return true
+  return false
+}
+
+/**
  * Shoot a ray straight down from high above (x,z) to find ground height.
- * This should help the character move while sticking to the ground instead of going through it like before...
+ * Skips vegetation/props, then prefers terrain-like mesh names so porch props / floating geometry
+ * above the sand do not set the character Y. This should prevent the character from climbing trees. 
  */
 function getGroundHit(x, z, sceneRoot, raycaster, origin, down) {
   origin.set(x, 80, z)
   down.set(0, -1, 0)
   raycaster.set(origin, down)
   const hits = raycaster.intersectObjects(sceneRoot.children, true)
-  const hit = hits.find((h) => {
+  const candidates = []
+  for (const h of hits) {
     const o = h.object
-    if (o.userData.isCharacter) return false
-    if (isNonWalkableGroundSurface(o)) return false
-    return true
-  })
-  if (!hit) return null
+    if (o.userData.isCharacter) continue
+    if (isNonWalkableGroundSurface(o)) continue
+    candidates.push(h)
+  }
+  if (!candidates.length) return null
+
+  const terrainHit = candidates.find((h) => isTerrainGroundMesh(h.object))
+  const hit = terrainHit ?? candidates[0]
+
   const isWater = hit.object.name === 'water' || hit.object.isWater === true
   return { y: hit.point.y, isWater }
 }
@@ -120,8 +141,6 @@ export default function Character({ groupRef, moveTargetRef }) {
     scene.traverse((o) => {
       if (o.isMesh) {
         o.userData.isCharacter = true
-        o.castShadow = true
-        o.receiveShadow = true
         const mats = Array.isArray(o.material) ? o.material : [o.material]
         for (const mat of mats) {
           if (mat && 'envMapIntensity' in mat) {
@@ -142,6 +161,15 @@ export default function Character({ groupRef, moveTargetRef }) {
     scene.position.sub(center)
     const box2 = new Box3().setFromObject(scene)
     scene.position.y -= box2.min.y
+  }, [scene])
+
+  // Keep shadow flags in sync (SkinnedMesh + hot reload; scale does not affect castShadow).
+  useLayoutEffect(() => {
+    scene.traverse((o) => {
+      if (!o.isMesh) return
+      o.castShadow = true
+      o.receiveShadow = true
+    })
   }, [scene])
 
   useLayoutEffect(() => {
@@ -264,6 +292,19 @@ export default function Character({ groupRef, moveTargetRef }) {
   return (
     <group ref={groupRef}>
       <primitive object={scene} />
+      {/*
+        Directional shadow maps often dissapear under the ground plane. ContactShadows
+        renders a local depth pass from above the feet so a soft shadow stays visible on terrain.
+      */}
+      <ContactShadows
+        position={[0, 0.008, 0]}
+        opacity={0.58}
+        scale={0.95}
+        blur={2.1}
+        far={1.35}
+        resolution={512}
+        color="#1e1812"
+      />
     </group>
   )
 }

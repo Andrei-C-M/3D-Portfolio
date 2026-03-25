@@ -129,7 +129,8 @@ function addInteractionLights(scene) {
   for (const root of roots) {
     if (isGiraffeInteractiveRoot(root)) continue
 
-    const glowMul = isBookGithubLinkedInRoot(root) ? 0.5 : 1
+    /* Book / GitHub / LinkedIn: ~40% dimmer than the previous 0.5 mul → 0.3 */
+    const glowMul = isBookGithubLinkedInRoot(root) ? 0.3 : 1
     const light = new PointLight(0xffe8b8, 0.45 * glowMul, 5.5, 2)
     light.position.set(0, 0.25, 0)
     light.name = 'interaction-accent-light'
@@ -155,10 +156,22 @@ function isMeshVisibleInHierarchy(mesh) {
   return true
 }
 
+/** Beach rowboat used for spawn ,I keep it out of collision or the character spawns inside the hull box and cannot move. */
+function isPartOfBoatRowLarge(mesh) {
+  let o = mesh
+  while (o) {
+    const n = (o.name || '').trim().toLowerCase()
+    if (n === 'boat-row-large' || n.includes('boat-row-large')) return true
+    o = o.parent
+  }
+  return false
+}
+
 /**
- * If the mesh name contains "palm" or "house" etc. → solid obstacle.
+ * If the mesh name contains "palm" or "house" etc, then it is considered a solid obstacle.
  */
 function isObstacleMesh(mesh) {
+  if (isPartOfBoatRowLarge(mesh)) return false
   const n = mesh.name || ''
   if (/water|terrain|sand|ground|grass|sea|ocean|beach/i.test(n)) return false
   if (mesh.isWater) return false
