@@ -10,22 +10,17 @@ const LINKEDIN_URL = 'https://www.linkedin.com/in/andrei-manea-570669277/'
 const PORTFOLIO_URL = 'https://andreimanea.framer.website/'
 
 const PANEL_COPY = {
-  about: {
-    hero: { kind: 'image', src: '/assets/profile.jpg', alt: 'Profile' },
-    title: 'About',
-    subtitle: 'Designer, developer, and builder of interactive experiences.',
-    paragraphs: [
-      'This is placeholder copy you can replace with your own story — where you work, what you care about, and how you blend 3D, the web, and search-friendly content.',
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus feugiat, urna vitae ullamcorper tincidunt, nibh tortor aliquet massa, at pulvinar nisl lacus sit amet nunc.',
-      'Curabitur id ligula vel nisl imperdiet convallis. Integer pharetra, lectus non efficitur tempus, purus urna cursus lorem, sit amet vestibulum erat magna nec felis.',
-    ],
-  },
   book: {
-    hero: { kind: 'image', src: '/assets/book.jpg', alt: 'Book cover' },
+    hero: {
+      kind: 'image',
+      src: '/assets/book.jpg',
+      alt: 'Book cover',
+      variant: 'book',
+    },
     title: 'Book',
     subtitle: 'SEO, AEO, and the future of search.',
     paragraphs: [
-      'In 2026, I wrote a book on SEO and AEO that explores the future of search and how to optimize for both traditional engines and AI-powered assistants.',
+      'In 2026, I wrote a book on SEO and AEO that explores the future of search and how to optimize for both traditional search engines and AI-powered assistants.',
     ],
     footerLink: {
       label: 'View on Amazon (UK)',
@@ -39,7 +34,6 @@ const PANEL_COPY = {
     paragraphs: [
       "Want to connect professionally? I'm active on LinkedIn, where I share updates, collaborate with others, and keep the conversation going. I'd love to connect.",
     ],
-    linkedInUrl: LINKEDIN_URL,
     footerLink: {
       label: 'linkedin.com/in/andrei-manea-570669277',
       href: LINKEDIN_URL,
@@ -75,9 +69,13 @@ const PANEL_COPY = {
 function PanelHero({ hero }) {
   if (!hero) return null
   if (hero.kind === 'image') {
+    const imgClass =
+      hero.variant === 'book'
+        ? 'side-panel-hero-img side-panel-hero-img--book'
+        : 'side-panel-hero-img'
     return (
       <img
-        className="side-panel-hero-img"
+        className={imgClass}
         src={hero.src}
         alt={hero.alt}
         decoding="async"
@@ -157,7 +155,11 @@ export default function SidePanel() {
           ×
         </button>
 
-        <div className="side-panel-hero">
+        <div
+          className={`side-panel-hero${
+            openPanelId === 'book' ? ' side-panel-hero--book' : ''
+          }`}
+        >
           {content && <PanelHero hero={content.hero} />}
         </div>
 
@@ -198,26 +200,6 @@ export default function SidePanel() {
                   {p}
                 </p>
               ))}
-              {content.linkedInUrl && (
-                <p
-                  style={{
-                    fontSize: 15,
-                    lineHeight: 1.65,
-                    marginBottom: 16,
-                    color: '#d4d4d4',
-                  }}
-                >
-                  Connect on{' '}
-                  <a
-                    href={content.linkedInUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    linkedin.com/in/andrei-manea-570669277
-                  </a>
-                  .
-                </p>
-              )}
               {content.footerLink && (
                 <p className="side-panel-footer-link">
                   <a

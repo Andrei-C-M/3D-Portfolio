@@ -3,7 +3,7 @@ import { useThree } from '@react-three/fiber'
 import { Raycaster, Vector2 } from 'three'
 import { usePanel } from '../context/PanelContext.jsx'
 
-// Walk up parents until we find a link (optional; for new-tab props).
+// In threejs every mesh or group sits in a tree structure, this function walks up the tree until it finds a link .
 function findExternalUrl(object) {
   let o = object
   while (o) {
@@ -15,7 +15,7 @@ function findExternalUrl(object) {
   return null
 }
 
-// Walk up parents until we find which side panel to open.
+// Walk up tree until we find which side panel to open.
 function findInteractionPanel(object) {
   let o = object
   while (o) {
@@ -32,7 +32,7 @@ function findInteractionPanel(object) {
 
 /**
  * On canvas click: ray from camera through the cursor, see what was hit first.
- * Panel or link → handle that. Else valid ground → save point so the character walks there.
+ * Panel or link - open it. Else valid ground - save point so the character walks there.
  */
 export function useClickToMove(targetRef) {
   const { camera, gl, scene } = useThree()

@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { PCFSoftShadowMap, SRGBColorSpace } from 'three'
+import { PCFShadowMap, SRGBColorSpace } from 'three'
 import { PanelProvider } from './context/PanelContext.jsx'
 import SidePanel from './SidePanel.jsx'
 import Scene from './Scene'
@@ -72,7 +72,7 @@ export default function App() {
               toneMappingExposure: 0.82,
             }}
             onCreated={({ gl }) => {
-              gl.shadowMap.type = PCFSoftShadowMap
+              gl.shadowMap.type = PCFShadowMap
             }}
           >
             <Scene />

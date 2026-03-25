@@ -5,18 +5,18 @@ const _size = /* @__PURE__ */ new Vector3()
 const _toward = /* @__PURE__ */ new Vector3()
 
 /**
- * Picks a starting position for the character near the small boat in the GLB.
+ * Picks a starting position for the character in the GLB scene.
  *
- * `Box3().setFromObject(mesh)` is Three’s helper for an axis-aligned bounding box around
- * anything in the scene — super handy for “where is this object roughly?” without manual math.
- * We nudge the spawn point slightly toward the island center so you don’t spawn inside a prop.
+ * `Box3().setFromObject(mesh)` is Threejs helper for an axis-aligned bounding box around
+ * anything in the scene 
+ * Moved the spawn point slightly toward the island center so youthe character does not spawn inside a prop.
  */
 export function getSpawnNearSmallBoat(islandScene) {
   if (!islandScene) return null
 
   islandScene.updateMatrixWorld(true)
 
-  /** Prefer the mesh Blender named exactly `boat-row-large` if it exists */
+  /** Prefer the mesh Blender named exactly `boat-row-large` if it exists, we use it to aproximate the spawn point*/
   let mesh = islandScene.getObjectByName('boat-row-large')
   if (!mesh || !mesh.isMesh) {
     let best = null

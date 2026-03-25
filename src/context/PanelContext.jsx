@@ -7,11 +7,11 @@ import {
 } from 'react'
 
 /**
- * React context for the HTML side drawer (totally separate from the WebGL scene).
+ * React context for the HTML side popup window ( separate from the WebGL scene).
  *
- * Why context? The click handler lives *inside* the Canvas (useClickToMove), but the panel
+ * The click handler is inside the Canvas (useClickToMove), but the panel
  * itself is a normal DOM component next to `<Canvas>` in App.jsx. Context lets both layers
- * share “which panel is open” without threading props through every parent.
+ * share “which windowis open” without props through every parent.
  */
 const PanelContext = createContext(null)
 

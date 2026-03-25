@@ -16,6 +16,6 @@ export function getPanelIdForMeshName(name) {
   if (/linkedin/.test(n)) return 'linkedin'
   if (/github/.test(n)) return 'github'
   if (/profile/.test(n)) return 'profile'
-  if (/(^|[^a-z0-9])giraffe([^a-z0-9]|$)/.test(n)) return 'about'
+  if (/(^|[^a-z0-9])giraffe([^a-z0-9]|$)/.test(n)) return 'profile'
   return null
 }

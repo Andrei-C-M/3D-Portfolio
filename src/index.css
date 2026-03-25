@@ -61,6 +61,17 @@ body {
   display: block;
 }
 
+/* Book panel: taller strip (~2× default) + full cover visible (letterboxed) */
+.side-panel-hero--book {
+  height: 600px;
+}
+
+.side-panel-hero-img--book {
+  object-fit: contain;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
 .side-panel-hero-gradient {
   width: 100%;
   height: 100%;
@@ -148,6 +159,10 @@ body {
 
   .side-panel-hero {
     height: min(48vh, 360px);
+  }
+
+  .side-panel-hero--book {
+    height: min(76vh, 600px);
   }
 
   .side-panel-body {

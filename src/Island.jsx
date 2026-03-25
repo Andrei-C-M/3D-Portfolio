@@ -376,7 +376,7 @@ export default function Island() {
   }, [scene])
 
   // Water animation and object highlights
-  const WATER_TIME_SCALE = 0.12
+  const WATER_TIME_SCALE = 0.144
   useFrame((state, delta) => {
     const w = scene.userData.waterInstance ?? scene.getObjectByName('water')
     if (w?.material?.uniforms?.time) {

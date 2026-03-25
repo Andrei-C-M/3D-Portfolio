@@ -25,16 +25,17 @@ export default function Scene() {
     const apply = () => {
       const L = sunRef.current
       if (!L?.shadow) return false
-      L.shadow.mapSize.set(2048, 2048)
+      L.shadow.mapSize.set(4096, 4096)
       L.shadow.bias = -0.00025
-      L.shadow.normalBias = 0.045
+      L.shadow.normalBias = 0.03
       const cam = L.shadow.camera
       cam.near = 0.5
       cam.far = 120
-      cam.left = -50
-      cam.right = 50
-      cam.top = 50
-      cam.bottom = -50
+      /* Tighter box than ±50: same map resolution covers less ground → sharper shadows */
+      cam.left = -32
+      cam.right = 32
+      cam.top = 32
+      cam.bottom = -32
       cam.updateProjectionMatrix()
       L.shadow.needsUpdate = true
       return true
@@ -67,13 +68,13 @@ export default function Scene() {
         intensity={1.45}
         color="#fff8ed"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[4096, 4096]}
         shadow-bias={-0.00025}
-        shadow-normalBias={0.045}
+        shadow-normalBias={0.03}
       >
         <orthographicCamera
           attach="shadow-camera"
-          args={[-50, 50, 50, -50, 0.5, 120]}
+          args={[-32, 32, 32, -32, 0.5, 120]}
         />
         <object3D position={[0, 0, 0]} attach="target" />
       </directionalLight>
