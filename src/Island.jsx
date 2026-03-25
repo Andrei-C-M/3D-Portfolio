@@ -101,6 +101,15 @@ function isGiraffeInteractiveRoot(root) {
   return /(^|[^a-z0-9])giraffe([^a-z0-9]|$)/.test(n)
 }
 
+/** Book / GitHub / LinkedIn props: dimmer accent (see `accentGlowMul`). */
+function isBookGithubLinkedInRoot(root) {
+  const n = (root.name || '').toLowerCase()
+  if (/(^|[^a-z0-9])book([^a-z0-9]|$)/.test(n)) return true
+  if (/github/.test(n)) return true
+  if (/linkedin/.test(n)) return true
+  return false
+}
+
 /** One warm point light per interactive root (book, github, linkedin) */
 function addInteractionLights(scene) {
   if (scene.userData.interactionLightsAdded) return
@@ -120,10 +129,13 @@ function addInteractionLights(scene) {
   for (const root of roots) {
     if (isGiraffeInteractiveRoot(root)) continue
 
-    const light = new PointLight(0xffe8b8, 0.45, 5.5, 2)
+    /* Book / GitHub / LinkedIn: ~40% dimmer than the previous 0.5 mul → 0.3 */
+    const glowMul = isBookGithubLinkedInRoot(root) ? 0.3 : 1
+    const light = new PointLight(0xffe8b8, 0.45 * glowMul, 5.5, 2)
     light.position.set(0, 0.25, 0)
     light.name = 'interaction-accent-light'
     light.userData.isInteractionAccentLight = true
+    light.userData.accentGlowMul = glowMul
     root.add(light)
     accentLights.push(light)
   }
@@ -144,10 +156,22 @@ function isMeshVisibleInHierarchy(mesh) {
   return true
 }
 
+/** Beach rowboat used for spawn ,I keep it out of collision or the character spawns inside the hull box and cannot move. */
+function isPartOfBoatRowLarge(mesh) {
+  let o = mesh
+  while (o) {
+    const n = (o.name || '').trim().toLowerCase()
+    if (n === 'boat-row-large' || n.includes('boat-row-large')) return true
+    o = o.parent
+  }
+  return false
+}
+
 /**
- * If the mesh name contains "palm" or "house" etc. → solid obstacle.
+ * If the mesh name contains "palm" or "house" etc, then it is considered a solid obstacle.
  */
 function isObstacleMesh(mesh) {
+  if (isPartOfBoatRowLarge(mesh)) return false
   const n = mesh.name || ''
   if (/water|terrain|sand|ground|grass|sea|ocean|beach/i.test(n)) return false
   if (mesh.isWater) return false
@@ -381,7 +405,8 @@ export default function Island() {
     accentLights.forEach((light, i) => {
       const pulse =
         0.75 + 0.55 * (0.5 + 0.5 * Math.sin(t * 2.2 + i * 0.65))
-      light.intensity = pulse * ACCENT_LIGHT_INTENSITY_SCALE
+      const mul = light.userData.accentGlowMul ?? 1
+      light.intensity = pulse * ACCENT_LIGHT_INTENSITY_SCALE * mul
     })
   })
 

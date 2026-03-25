@@ -68,7 +68,7 @@ export default function App() {
             gl={{
               antialias: true,
               outputColorSpace: SRGBColorSpace,
-              toneMappingExposure: 0.82,
+              toneMappingExposure: 0.9,
             }}
             onCreated={({ gl }) => {
               gl.shadowMap.type = PCFShadowMap
