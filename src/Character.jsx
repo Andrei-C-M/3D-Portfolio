@@ -20,6 +20,19 @@ function findAction(actions, names, regex) {
 }
 
 /**
+ * Ray hits the topmost surface first. Palm fronds / leaves are often separate meshes and not always
+ * tagged as obstacles, so we skip vegetation and prop geometry and use the next hit (sand/terrain).
+ */
+function isNonWalkableGroundSurface(object) {
+  if (object.userData.obstacle) return true
+  const n = (object.name || '').toLowerCase()
+  if (/water|terrain|sand|ground|grass|sea|ocean|beach|island|path/i.test(n)) return false
+  return /tree|palm|trunk|leaf|leaves|frond|branch|canopy|bark|vine|pine|fir|bush|hedge|house|home|cottage|cannon|mast|sail|ship|boat|rowboat|wreck|rock|crate|barrel|fence|pier|dock|lamp|plank|campfire|fire|deck|rail|wheel|anchor|book|github|linkedin|giraffe/i.test(
+    n,
+  )
+}
+
+/**
  * Shoot a ray straight down from high above (x,z) to find ground height.
  * This should help the character move while sticking to the ground instead of going through it like before...
  */
@@ -31,7 +44,7 @@ function getGroundHit(x, z, sceneRoot, raycaster, origin, down) {
   const hit = hits.find((h) => {
     const o = h.object
     if (o.userData.isCharacter) return false
-    if (o.userData.obstacle) return false
+    if (isNonWalkableGroundSurface(o)) return false
     return true
   })
   if (!hit) return null
