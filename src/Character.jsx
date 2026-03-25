@@ -3,16 +3,15 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { Box3, LoopRepeat, Raycaster, Vector3 } from 'three'
 
-/** How fast the character slides on XZ toward the click target (world units per second). */
+/** How fast the character slides on XZ axis toward the click target (world units/second). */
 const MOVE_SPEED = 1.12
-/** Shrinks the raw GLB so the figure matches the tiny island scale. */
+/** Shrinks the raw GLB so the figure matches the island scale. */
 const CHARACTER_SCALE_FACTOR = 0.08
 /**
- * Fake “capsule” radius for collision — we only test a single point at COLLISION_HEIGHT,
- * then inflate the obstacle boxes by this much so you don’t walk through thin walls.
+ * Fake box radius for collision 
  */
 const CHARACTER_RADIUS = 0.096
-/** Height of that test point above the feet (roughly chest height). */
+/** Height for collision detection. */
 const COLLISION_HEIGHT = 0.256
 
 function findAction(actions, names, regex) {
@@ -21,9 +20,8 @@ function findAction(actions, names, regex) {
 }
 
 /**
- * Shoot a ray straight down from high above (x,z) to find ground height. We skip meshes
- * tagged as the character or as obstacles so tree canopies don’t block the ray — the ground
- * mesh should be hit instead.
+ * Shoot a ray straight down from high above (x,z) to find ground height.
+ * This should help the character move while sticking to the ground instead of going through it like before...
  */
 function getGroundHit(x, z, sceneRoot, raycaster, origin, down) {
   origin.set(x, 80, z)
@@ -46,7 +44,7 @@ function snapYToLand(position, sceneRoot, raycaster, origin, down) {
   if (g && !g.isWater) position.y = g.y
 }
 
-/** Simple AABB overlap test using obstacle boxes built in Island.jsx (static scene). */
+/** more mesh collision tests */
 function isBlockedAt(x, y, z, obstacleMeshes, tmpBox) {
   const p = new Vector3(x, y + COLLISION_HEIGHT, z)
   for (const mesh of obstacleMeshes) {
@@ -59,8 +57,8 @@ function isBlockedAt(x, y, z, obstacleMeshes, tmpBox) {
 }
 
 /**
- * Extra ray along the movement step — thin fence posts can fall *between* point samples
- * on a single frame; a short segment ray catches those edge cases.
+* This function shoots a straight line along the path you`re about to walk; if it hits an obstacle mesh before
+ * reaching the end, it blocks the move. I had to add this in addition to the collision boxes to prevent the character moving to places it should not.
  */
 function segmentHitsObstacle(
   fromX,
@@ -84,8 +82,8 @@ function segmentHitsObstacle(
 }
 
 /**
- * Loads the Mixamo-style character GLB, scales it, and each frame moves the group toward
- * `moveTargetRef` while staying on land and respecting obstacle boxes from the island.
+ * Loads the  character GLB, scales it, and each frame moves the group toward
+ * `moveTargetRef` while staying on land and respecting obstacle boxes from the island props/objects and water.
  */
 export default function Character({ groupRef, moveTargetRef }) {
   const { scene, animations } = useGLTF('/assets/character-male-b.glb')
@@ -99,7 +97,6 @@ export default function Character({ groupRef, moveTargetRef }) {
   const movingRef = useRef(false)
   const walkRef = useRef(null)
   const idleRef = useRef(null)
-  /** Some GLBs only ship a walk clip — we play it but freeze `timeScale` until you actually move */
   const walkOnlyRef = useRef(false)
   const stuckTimeRef = useRef(0)
 

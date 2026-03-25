@@ -2,10 +2,7 @@ import { useEffect } from 'react'
 import { usePanel } from './context/PanelContext.jsx'
 
 /**
- * Regular HTML overlay — not Three.js. Styling for the drawer lives in index.css (`.side-panel-*`).
- *
- * Keys here must match what `getPanelIdForMeshName` returns in interactionConfig.js. Each entry
- * can have `hero` (photo or gradient), `paragraphs`, optional `linkedInUrl` / `footerLink`, etc.
+ * Regular HTML overlay. Styling is in index.css (`.side-panel*`).
  */
 const BOOK_URL = 'https://www.amazon.co.uk/dp/B0GRB1P394'
 const GITHUB_URL = 'https://github.com/Andrei-C-M'
@@ -74,7 +71,7 @@ const PANEL_COPY = {
   },
 }
 
-/** Top strip of the panel: either a photo from `/public` or a simple gradient for GitHub/LinkedIn. */
+/** Top strip of the panel: image or github/linkedin logo */
 function PanelHero({ hero }) {
   if (!hero) return null
   if (hero.kind === 'image') {
@@ -102,8 +99,7 @@ function PanelHero({ hero }) {
 }
 
 /**
- * The slide-out panel. `open` is driven by `openPanelId` from `PanelContext`; clicking the
- * dimmed backdrop or pressing Escape closes it. Links use `target="_blank"` + `rel` for security.
+ * The slide-out panel/popup window thing
  */
 export default function SidePanel() {
   const { openPanelId, closePanel } = usePanel()
@@ -143,7 +139,7 @@ export default function SidePanel() {
         tabIndex={open ? 0 : -1}
       />
 
-      {/* stopPropagation on the drawer so clicks don’t bubble up to the backdrop (which would close us). */}
+
       <aside
         role="dialog"
         aria-modal="true"

@@ -1,9 +1,9 @@
 import { useClickToMove } from './hooks/useClickToMove'
 
 /**
- * Tiny wrapper so Scene.jsx stays declarative. Hooks must run inside the R3F `<Canvas>` tree,
- * so we can’t put useClickToMove in App.jsx — this component renders nothing but registers the
- * listener on the WebGL canvas.
+ * I had to put the click code in a separate componentbecause React hooks (like 
+ *  * useClickToMove hook) only work *inside* the 3D Canvas, not in the App.jsx above it. This file
+ * doesn’t draw anything on screen; it just hooks up “when you click the canvas, do <something>.”
  */
 export default function ClickToMove({ targetRef }) {
   useClickToMove(targetRef)

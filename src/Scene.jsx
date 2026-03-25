@@ -7,20 +7,19 @@ import ClickToMove from './ClickToMove'
 import CharacterOrbitCamera from './CharacterOrbitCamera'
 
 /**
- * Everything that exists in the 3D world for this portfolio: lights, ground, GLTF island,
+ * Everything that exists in the 3D world for this portfolio: lights, ground plane, GLTF island model, water shader,
  * animated character, click-to-move, and the orbit camera.
  *
- * `moveTargetRef` is a mutable `Vector3` — the character walks toward whatever point the
- * raycast in `useClickToMove` writes there. Refs are used so we don’t re-render the whole
- * scene every frame when the target moves.
+ * `moveTargetRef` is for character movement, the character walks toward whatever point the
+ * raycast in `useClickToMove` writes there. Refs are used so it won’t rerender the whole
+ * scene every frame when the target moves. That would be annoying.
  */
 export default function Scene() {
   const sunRef = useRef(null)
   const characterRef = useRef(null)
   const moveTargetRef = useRef(new Vector3())
 
-  // Directional lights with shadows need their shadow camera frustum tuned; the ref can be
-  // null on the first paint, so we retry on the next animation frame.
+  // Directional lights with shadows need their shadow camera frustum tuned( frustum is the 3D volume the camera can see, basically a pyramid) tuned
   useLayoutEffect(() => {
     let id
     const apply = () => {
@@ -48,20 +47,20 @@ export default function Scene() {
 
   return (
     <>
-      {/* Huge plane under the island — catches shadows from props */}
+      {/* Made a huge plane under the island which catches shadows from models/props */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[40, 40]} />
         <meshStandardMaterial color="#3b7d2a" envMapIntensity={0.35} />
       </mesh>
 
-      {/* Ambient + hemispheric fill so nothing is pure black; keep them low so sun shadows read */}
+      {/* Ambient + hemispheric fill so nothing is pure black; its kept low so sun shadows show */}
       <ambientLight intensity={0.06} />
       <hemisphereLight
         skyColor="#a8c8e8"
         groundColor="#2a1f14"
         intensity={0.14}
       />
-      {/* Main sun: orthographic shadow camera for crisp contact shadows on the island */}
+      {/* Main sun: orthographic/isometric shadow camera for crisp contact shadows on the island */}
       <directionalLight
         ref={sunRef}
         position={[18, 28, 14]}
@@ -91,7 +90,7 @@ export default function Scene() {
         castShadow={false}
       />
 
-      {/* HDR environment map: lights the scene and draws the sky; intensity kept moderate */}
+      {/* HDR environment map: lights the scene and draws the sky; intensity kept moderate. I might change this later, but this hdri map was the best I could find that fit the island scene */}
       <Environment
         files="/assets/qwantani_sunset_puresky_1k.hdr"
         background

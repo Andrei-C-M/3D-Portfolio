@@ -1,26 +1,14 @@
 /**
- * How clicks on the island map to UI (see Island.jsx + useClickToMove.js).
- *
- * In Three.js, every mesh/group can carry custom data on `userData`. We store either an
- * `interactionPanel` id (opens the React side drawer) or, if you ever need it again, an
- * `externalUrl` for a new browser tab. The matching is done by **object names from Blender**,
- * so renaming a mesh there means updating the patterns below.
- */
 
-/**
- * Reserved for “open this URL in a new tab” props. Right now everything goes through the
- * side panel instead, so this always returns null — but we keep the function so the wiring
- * stays obvious if you add a pure link later.
- */
+
+/** Not used right now, leftover from previous code, might use it later */
 export function getUrlForInteractiveMeshName(_name) {
   return null
 }
 
 /**
- * Which slide-out panel to show when the player clicks a named prop.
- *
- * We use awkward-looking regexes on purpose: e.g. the word `book` must not match inside
- * `facebook`, or clicking a Facebook icon would wrongly open the book panel.
+ * Returns the panel id, or `null` if this name shouldn’t open anything.
+ Each exported mesh has its own name in Blender, this checks if the user clicked certain objects (like "book", "linkedin",etc)
  */
 export function getPanelIdForMeshName(name) {
   const n = (name || '').toLowerCase()

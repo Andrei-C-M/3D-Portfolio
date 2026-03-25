@@ -17,24 +17,22 @@ import { getSpawnNearSmallBoat } from './spawnPoint.js'
 import { Water } from 'three/examples/jsm/objects/Water.js'
 
 /**
- * Island.jsx — loads the GLB, replaces Blender’s water mesh with Three’s animated water,
- * tags meshes for click panels + collision, and adds yellow edge outlines on interactive props.
- *
- * `userData` is the usual place to stash game logic on Three objects: we set `interactionPanel`,
- * `obstacle`, `obstacleBox`, etc., so Character.jsx and useClickToMove can stay dumb.
+ * Island.jsx-  loads the GLB, replaces Blender’s water mesh with Three’js animated water,
+ * tags meshes for click panels + collision, and adds yellow edge shine/outlines on interactive props.
+
  */
 
-// Max size (world units) for a mesh that’s allowed to receive a click panel. Stops huge
-// accidental planes under a “Book” empty from stealing every raycast.
+// Max size (world units) for a mesh that’s allowed to receive a click panel. 
+//I had issues when clicking far from an object, it would still open panels as if the user clicked on the object itself
+
 const MAX_INTERACTIVE_MESH_EXTENT = 2.5
 
 const _interactiveMeshSize = new Vector3()
 
 /**
- * Walks the GLB and stamps `userData.interactionPanel` on meshes that match names in
- * interactionConfig. We only tag **actual Mesh** geometry (not empty parents) so raycasts
- * hit the visible surface — see the long comment in the repo history if you’re debugging
- * “why does clicking sand open the book?”
+ * Goes through the island model and marks clickable meshes so clicks know which popup to open.
+ * The mark is stored on `userData.interactionPanel`. We only put it on real mesh geometry
+ * (not empty parent objects), so clicks land on what you actually see.
  */
 function tagInteractiveMeshes(scene) {
   scene.traverse((o) => {
@@ -42,7 +40,8 @@ function tagInteractiveMeshes(scene) {
     delete o.userData.interactionPanel
   })
 
-  // World matrices must be current before measuring bounding boxes.
+  // World matrices - in ThreeJS every object has a matrix that defines/stores its position, rotation, and scale in the world
+  //this prevents issues when reloading the scene or importing a newly exported version of the scene from Blender. 
   scene.updateMatrixWorld(true)
 
   function tryAssignInteractiveMesh(mesh, { externalUrl, interactionPanel }) {
@@ -86,7 +85,7 @@ function tagInteractiveMeshes(scene) {
   })
 }
 
-/** Used so we don’t add duplicate outlines for every nested mesh under an interactive root. */
+/** Used so we don’t add duplicate outlines for every nested mesh - performance optimization */
 function hasInteractiveParent(o, root) {
   let p = o.parent
   while (p && p !== root) {
@@ -140,7 +139,7 @@ function addInteractionOutlines(scene) {
   scene.userData.interactionOutlineMaterials = outlineMaterials
 }
 
-/** Water plane size in world units — should cover the green ground + a little margin. */
+/** Water plane size in world units + a little margin. */
 export const WATER_WORLD_EXTENT = 42
 
 /** Hidden objects in Blender still export sometimes — skip them for collision. */
@@ -154,8 +153,7 @@ function isMeshVisibleInHierarchy(mesh) {
 }
 
 /**
- * Heuristic: mesh name contains “tree” or “house” etc. → solid obstacle. Ground-ish names
- * are excluded. We deliberately skip `leaf` meshes — their bounding boxes are huge and noisy.
+ * If the mesh name contains "palm" or "house" etc. → solid obstacle.
  */
 function isObstacleMesh(mesh) {
   const n = mesh.name || ''
@@ -171,8 +169,8 @@ const PALM_COLLISION_MAX_HEIGHT = 2.8
 const HOUSE_COLLISION_SCALE = 0.8
 
 /**
- * `Box3` is an axis-aligned bounding box — the simplest collision volume for static scenery.
- * Palms get a short cylinder-ish box; houses shrink slightly so you don’t feel stuck on corners.
+ * `Box3` is an axis-aligned bounding box - simple collision volume for static scenery.
+ * Palms get a short cylinder shaped box; houses shrink slightly so I don’t get stuck on corners again.
  */
 function computeObstacleBox(mesh) {
   const full = new Box3().setFromObject(mesh)
@@ -213,6 +211,7 @@ const _obstacleSizeCheck = new Vector3()
 /** Builds a list of obstacle meshes + their `Box3` for Character.jsx. */
 function tagObstacles(scene) {
   scene.updateMatrixWorld(true)
+
   // Clear previous tags so renamed/removed meshes don’t keep stale collision after GLB updates.
   scene.traverse((o) => {
     if (!o.isMesh) return
@@ -235,13 +234,13 @@ function tagObstacles(scene) {
   scene.userData.obstacleMeshes = list
 }
 
-/** Wood/metal props look dull if we clamp env reflections too hard — skip those by name. */
+/** Wood/metal props had issues with shaders exported from blender — skip those by name. */
 function shouldSkipEnvMapClamp(mesh) {
   const n = (mesh.name || '').toLowerCase()
   return /barrel|cannon|crate|ship|pirate|mast|dock|rope|anchor|helm|rudder|deck|plank|wood/i.test(n)
 }
 
-/** Sets cast/receive shadow + slightly tones PBR env on generic meshes. */
+/** Turn on shadows for meshes, lower HDRI reflections on normal surfaces, except where we want stronger reflections */
 function applyShadowFlags(root) {
   root.traverse((obj) => {
     if (!obj.isMesh) return
@@ -267,7 +266,7 @@ function applyShadowFlags(root) {
 }
 
 /**
- * Main island component: GLTF scene, scaling, water swap, tagging, outlines.
+ * Main island component: GLTF scene, scaling, water shader swap, tagging, outlines.
  */
 export default function Island() {
   const { scene } = useGLTF(ISLAND_GLB_URL)
@@ -276,7 +275,7 @@ export default function Island() {
 
   const waterNormals = useLoader(TextureLoader, '/textures/waternormals.jpg')
 
-  // Center the model on the origin, sit it on y=0, then scale so its largest dimension ≈ 8 units.
+  // Center the model on the origin, sit it on y=0 axis, then scale so its largest dimension ≈ 8 units.
   const { scale } = useMemo(() => {
     const box = new Box3().setFromObject(scene)
     const center = new Vector3()
@@ -302,6 +301,7 @@ export default function Island() {
   }, [scale])
 
   // Swap the mesh named `water` for the Three.js Water example (animated normals + reflection).
+  // I used this water shader because it was the only one that worked with the island model, the original water shader exported from blender was crashing everything.
   useLayoutEffect(() => {
     if (scene.userData.waterEffectInstalled) return
 
@@ -312,7 +312,7 @@ export default function Island() {
 
     waterMesh.geometry.dispose()
 
-    // Large plane in local space so after island group scale it fills the scene (see WATER_WORLD_EXTENT)
+    // Large plane in local space so after island group scale it fills the scene
     const extentLocal = WATER_WORLD_EXTENT / scale
     const geom = new PlaneGeometry(extentLocal, extentLocal, 128, 128)
     const sunDir = new Vector3(18, 28, 14).normalize()
@@ -322,17 +322,17 @@ export default function Island() {
       textureHeight: 1024,
       waterNormals,
       sunDirection: sunDir,
-      // Warm highlight on waves; water reads as blue via waterColor
+      // Warm highlight on waves; water shader is colored blue by waterColor property
       sunColor: 0xe8f4ff,
       waterColor: 0x1565c0,
-      // Slightly stronger ripples on a bigger plane
+      // Slightly stronger ripples
       distortionScale: 3.4,
       fog: false,
     })
 
     water.position.copy(waterMesh.position)
     // PlaneGeometry lies in XY; rotate -90° on X so it lies flat on XZ (horizontal water).
-    // Do not reuse the old mesh quaternion — it fights the new plane and reads as a vertical wall.
+    // Do not reuse the old mesh
     water.rotation.set(-Math.PI / 2, 0, 0)
     water.scale.set(1, 1, 1)
     water.name = 'water'
@@ -370,12 +370,12 @@ export default function Island() {
     rootScene.userData.characterSpawn = spawn ? spawn.clone() : null
   }, [scene, scale, rootScene])
 
-  // useGLTF can resolve after first paint — re-apply shadow/env tweaks when the scene is ready.
+  // re-apply shadow/env tweaks when the scene is ready, had issues with the shadows not showing up properly when the scene was reloaded.
   useEffect(() => {
     applyShadowFlags(scene)
   }, [scene])
 
-  // Water shader needs a time uniform; outline materials breathe so props feel “alive”.
+  // Water animation and object highlights
   const WATER_TIME_SCALE = 0.12
   useFrame((state, delta) => {
     const w = scene.userData.waterInstance ?? scene.getObjectByName('water')
@@ -393,7 +393,7 @@ export default function Island() {
 
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
-      {/* `primitive` mounts an existing Three object (the GLTF scene) into the R3F tree. */}
+      {/* here we plug the ThreeJS scene into a react component tree instead of listing every mesh manually */}
       <primitive object={scene} />
     </group>
   )

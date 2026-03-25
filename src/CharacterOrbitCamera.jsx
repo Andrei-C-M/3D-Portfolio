@@ -4,12 +4,8 @@ import { OrbitControls } from '@react-three/drei'
 import { MOUSE, TOUCH, Vector3 } from 'three'
 
 /**
- * OrbitControls from drei wraps Three’s camera controller — it keeps a fixed distance from
- * `followRef` (the character group) so you get a gentle isometric follow shot.
- *
- * The fiddly bit: we want **left click** to go to `useClickToMove`, not rotate the camera.
- * So we map mouse buttons so only middle mouse rotates; on touch, one finger still hits the
- * canvas for click-to-move, and two fingers rotate (zoom is disabled anyway).
+ * Camera follows the character at a fixed distance (third-person or isometricstyle). Left click is for
+ * walking, not rotating. Only middle mouse (or two fingers on touch) spins the view.
  */
 export default function CharacterOrbitCamera({
   followRef,
@@ -38,6 +34,7 @@ export default function CharacterOrbitCamera({
   }, [distance, heightOffset])
 
   // Every frame, keep the orbit target glued to the character (slightly above ground).
+  // I need to adjust this later because the camera sometimes acts very weird
   useFrame(() => {
     const ctrl = orbitRef.current
     const t = followRef?.current
