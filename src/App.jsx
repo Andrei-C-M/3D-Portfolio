@@ -29,10 +29,9 @@ function Loader() {
  * Root of the app: normal React DOM wraps everything.
  *
  * - `PanelProvider` must wrap both `<Canvas>` and `<SidePanel>` so hooks inside the 3D tree
- *   can open the HTML drawer.
+ *   can open the HTML drawer/window thingy.
  * - `<Canvas>` from React Three Fiber creates the WebGL context; everything 3D lives under
- *   `<Scene />`. Think of R3F as “React bindings for Three.js” — you still use Three concepts,
- *   but components re-render when state changes.
+ *   `<Scene />`. 
  */
 export default function App() {
   return (
@@ -53,7 +52,7 @@ export default function App() {
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10,
-            color: '#ccc',
+            color: '#fff',
             fontSize: 14,
             fontFamily: 'system-ui, sans-serif',
             pointerEvents: 'none',

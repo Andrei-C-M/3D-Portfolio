@@ -3,10 +3,8 @@ import { useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import {
   Box3,
-  EdgesGeometry,
-  LineBasicMaterial,
-  LineSegments,
   PlaneGeometry,
+  PointLight,
   RepeatWrapping,
   TextureLoader,
   Vector3,
@@ -18,7 +16,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js'
 
 /**
  * Island.jsx-  loads the GLB, replaces Blender’s water mesh with Three’js animated water,
- * tags meshes for click panels + collision, and adds yellow edge shine/outlines on interactive props.
+ * tags meshes for click panels + collision, and adds a small accent light on interactive props.
 
  */
 
@@ -85,7 +83,7 @@ function tagInteractiveMeshes(scene) {
   })
 }
 
-/** Used so we don’t add duplicate outlines for every nested mesh - performance optimization */
+/** Skip children when the parent is already the interactive root (one light per prop). */
 function hasInteractiveParent(o, root) {
   let p = o.parent
   while (p && p !== root) {
@@ -95,15 +93,20 @@ function hasInteractiveParent(o, root) {
   return false
 }
 
-/**
- * Builds `EdgesGeometry` line segments around each interactive mesh — cheap “highlight”
- * without post-processing. Materials are stored on `scene.userData` so useFrame can pulse opacity.
- */
-function addInteractionOutlines(scene) {
-  if (scene.userData.interactionOutlinesAdded) return
-  scene.userData.interactionOutlinesAdded = true
+/** ~40% of previous strength (60% lower). */
+const ACCENT_LIGHT_INTENSITY_SCALE = 0.4
 
-  const outlineMaterials = []
+function isGiraffeInteractiveRoot(root) {
+  const n = (root.name || '').toLowerCase()
+  return /(^|[^a-z0-9])giraffe([^a-z0-9]|$)/.test(n)
+}
+
+/** One warm point light per interactive root (book, github, linkedin) */
+function addInteractionLights(scene) {
+  if (scene.userData.interactionLightsAdded) return
+  scene.userData.interactionLightsAdded = true
+
+  const accentLights = []
 
   scene.updateMatrixWorld(true)
 
@@ -115,28 +118,17 @@ function addInteractionOutlines(scene) {
   })
 
   for (const root of roots) {
-    root.traverse((o) => {
-      if (!o.isMesh || !o.geometry || o.userData.interactionOutlineAttached) return
-      o.userData.interactionOutlineAttached = true
+    if (isGiraffeInteractiveRoot(root)) continue
 
-      const edges = new EdgesGeometry(o.geometry, 22)
-      const mat = new LineBasicMaterial({
-        color: 0xffcc33,
-        transparent: true,
-        opacity: 0.95,
-        depthTest: true,
-      })
-      outlineMaterials.push(mat)
-
-      const lines = new LineSegments(edges, mat)
-      lines.name = 'interaction-outline'
-      lines.userData.isInteractionOutline = true
-      lines.renderOrder = 10
-      o.add(lines)
-    })
+    const light = new PointLight(0xffe8b8, 0.45, 5.5, 2)
+    light.position.set(0, 0.25, 0)
+    light.name = 'interaction-accent-light'
+    light.userData.isInteractionAccentLight = true
+    root.add(light)
+    accentLights.push(light)
   }
 
-  scene.userData.interactionOutlineMaterials = outlineMaterials
+  scene.userData.interactionAccentLights = accentLights
 }
 
 /** Water plane size in world units + a little margin. */
@@ -266,7 +258,7 @@ function applyShadowFlags(root) {
 }
 
 /**
- * Main island component: GLTF scene, scaling, water shader swap, tagging, outlines.
+ * Main island component: GLTF scene, scaling, water shader swap, tagging, accent lights.
  */
 export default function Island() {
   const { scene } = useGLTF(ISLAND_GLB_URL)
@@ -364,7 +356,7 @@ export default function Island() {
     groupRef.current.updateMatrixWorld(true)
     tagObstacles(scene)
     tagInteractiveMeshes(scene)
-    addInteractionOutlines(scene)
+    addInteractionLights(scene)
     rootScene.userData.obstacleMeshes = scene.userData.obstacleMeshes || []
     const spawn = getSpawnNearSmallBoat(scene)
     rootScene.userData.characterSpawn = spawn ? spawn.clone() : null
@@ -375,7 +367,7 @@ export default function Island() {
     applyShadowFlags(scene)
   }, [scene])
 
-  // Water animation and object highlights
+  // Water animation + soft pulse on interactive accent lights
   const WATER_TIME_SCALE = 0.144
   useFrame((state, delta) => {
     const w = scene.userData.waterInstance ?? scene.getObjectByName('water')
@@ -383,17 +375,19 @@ export default function Island() {
       w.material.uniforms.time.value += delta * WATER_TIME_SCALE
     }
 
-    const mats = scene.userData.interactionOutlineMaterials
-    if (!mats?.length) return
+    const accentLights = scene.userData.interactionAccentLights
+    if (!accentLights?.length) return
     const t = state.clock.elapsedTime
-    mats.forEach((mat, i) => {
-      mat.opacity = 0.42 + 0.52 * (0.5 + 0.5 * Math.sin(t * 2.4 + i * 0.6))
+    accentLights.forEach((light, i) => {
+      const pulse =
+        0.75 + 0.55 * (0.5 + 0.5 * Math.sin(t * 2.2 + i * 0.65))
+      light.intensity = pulse * ACCENT_LIGHT_INTENSITY_SCALE
     })
   })
 
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
-      {/* here we plug the ThreeJS scene into a react component tree instead of listing every mesh manually */}
+      {/* we plug the ThreeJS scene into a react component tree instead of listing every mesh manually */}
       <primitive object={scene} />
     </group>
   )
