@@ -103,7 +103,7 @@ export default function Scene() {
 
       <Character groupRef={characterRef} moveTargetRef={moveTargetRef} />
       <ClickToMove targetRef={moveTargetRef} />
-      <CharacterOrbitCamera followRef={characterRef} heightOffset={0.85} distance={1.7} />
+      <CharacterOrbitCamera followRef={characterRef} heightOffset={0.07} distance={0.546} />
     </>
   )
 }

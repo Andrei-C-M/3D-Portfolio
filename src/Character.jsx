@@ -4,15 +4,15 @@ import { useAnimations, useGLTF } from '@react-three/drei'
 import { Box3, LoopRepeat, Raycaster, Vector3 } from 'three'
 
 /** How fast the character slides on XZ axis toward the click target (world units/second). */
-const MOVE_SPEED = 1.12
+const MOVE_SPEED = 0.56
 /** Shrinks the raw GLB so the figure matches the island scale. */
-const CHARACTER_SCALE_FACTOR = 0.08
+const CHARACTER_SCALE_FACTOR = 0.04
 /**
  * Fake box radius for collision 
  */
-const CHARACTER_RADIUS = 0.096
+const CHARACTER_RADIUS = 0.048
 /** Height for collision detection. */
-const COLLISION_HEIGHT = 0.256
+const COLLISION_HEIGHT = 0.128
 
 function findAction(actions, names, regex) {
   const key = names.find((n) => regex.test(n))
@@ -21,7 +21,7 @@ function findAction(actions, names, regex) {
 
 /**
  * Ray hits the topmost surface first. Palm fronds / leaves are often separate meshes and not always
- * tagged as obstacles, so we skip vegetation and prop geometry and use the next hit (sand/terrain).
+ * tagged as obstacles, so skip vegetation and prop geometry and use the next hit (sand/terrain).
  */
 function isNonWalkableGroundSurface(object) {
   if (object.userData.obstacle) return true
