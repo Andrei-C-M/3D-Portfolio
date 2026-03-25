@@ -6,6 +6,13 @@ import {
   useState,
 } from 'react'
 
+/**
+ * React context for the HTML side drawer (totally separate from the WebGL scene).
+ *
+ * Why context? The click handler lives *inside* the Canvas (useClickToMove), but the panel
+ * itself is a normal DOM component next to `<Canvas>` in App.jsx. Context lets both layers
+ * share “which panel is open” without threading props through every parent.
+ */
 const PanelContext = createContext(null)
 
 export function PanelProvider({ children }) {

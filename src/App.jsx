@@ -5,7 +5,7 @@ import { PanelProvider } from './context/PanelContext.jsx'
 import SidePanel from './SidePanel.jsx'
 import Scene from './Scene'
 
-/** Shown while the GLB and other async assets are loading (Suspense fallback) */
+/** Full-screen message while `useGLTF` and textures are still downloading. */
 function Loader() {
   return (
     <div
@@ -26,9 +26,13 @@ function Loader() {
 }
 
 /**
- * App: root UI. We wrap Canvas in Suspense because useGLTF loads the model asynchronously;
- * until it's ready, React shows the Loader. Canvas is the React Three Fiber root that
- * creates the WebGL context and runs the 3D scene (Scene.jsx) inside it.
+ * Root of the app: normal React DOM wraps everything.
+ *
+ * - `PanelProvider` must wrap both `<Canvas>` and `<SidePanel>` so hooks inside the 3D tree
+ *   can open the HTML drawer.
+ * - `<Canvas>` from React Three Fiber creates the WebGL context; everything 3D lives under
+ *   `<Scene />`. Think of R3F as “React bindings for Three.js” — you still use Three concepts,
+ *   but components re-render when state changes.
  */
 export default function App() {
   return (

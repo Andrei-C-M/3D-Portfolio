@@ -17,23 +17,32 @@ import { getSpawnNearSmallBoat } from './spawnPoint.js'
 import { Water } from 'three/examples/jsm/objects/Water.js'
 
 /**
- * Book / LinkedIn / GitHub / Profile — name must match interactionConfig (any Object3D, not only meshes:
- * Blender often uses Groups/empties named "Book" with mesh children named "Cube.001").
+ * Island.jsx — loads the GLB, replaces Blender’s water mesh with Three’s animated water,
+ * tags meshes for click panels + collision, and adds yellow edge outlines on interactive props.
  *
- * Links must live on actual mesh geometry only — never on the parent Group. Otherwise raycasts that
- * hit terrain or huge helper planes under the same empty still walk up and open the URL. Huge
- * child meshes (world AABB max edge) are skipped so stray planes/colliders don’t get the link.
+ * `userData` is the usual place to stash game logic on Three objects: we set `interactionPanel`,
+ * `obstacle`, `obstacleBox`, etc., so Character.jsx and useClickToMove can stay dumb.
  */
+
+// Max size (world units) for a mesh that’s allowed to receive a click panel. Stops huge
+// accidental planes under a “Book” empty from stealing every raycast.
 const MAX_INTERACTIVE_MESH_EXTENT = 2.5
 
 const _interactiveMeshSize = new Vector3()
 
+/**
+ * Walks the GLB and stamps `userData.interactionPanel` on meshes that match names in
+ * interactionConfig. We only tag **actual Mesh** geometry (not empty parents) so raycasts
+ * hit the visible surface — see the long comment in the repo history if you’re debugging
+ * “why does clicking sand open the book?”
+ */
 function tagInteractiveMeshes(scene) {
   scene.traverse((o) => {
     delete o.userData.externalUrl
     delete o.userData.interactionPanel
   })
 
+  // World matrices must be current before measuring bounding boxes.
   scene.updateMatrixWorld(true)
 
   function tryAssignInteractiveMesh(mesh, { externalUrl, interactionPanel }) {
@@ -77,6 +86,7 @@ function tagInteractiveMeshes(scene) {
   })
 }
 
+/** Used so we don’t add duplicate outlines for every nested mesh under an interactive root. */
 function hasInteractiveParent(o, root) {
   let p = o.parent
   while (p && p !== root) {
@@ -86,7 +96,10 @@ function hasInteractiveParent(o, root) {
   return false
 }
 
-/** Pulsing yellow edge outlines on interactive props (Book, LinkedIn, GitHub, Profile) */
+/**
+ * Builds `EdgesGeometry` line segments around each interactive mesh — cheap “highlight”
+ * without post-processing. Materials are stored on `scene.userData` so useFrame can pulse opacity.
+ */
 function addInteractionOutlines(scene) {
   if (scene.userData.interactionOutlinesAdded) return
   scene.userData.interactionOutlinesAdded = true
@@ -127,10 +140,10 @@ function addInteractionOutlines(scene) {
   scene.userData.interactionOutlineMaterials = outlineMaterials
 }
 
-/** World-space width/depth for water; keep in sync with Scene ground plane (~40) + small margin */
+/** Water plane size in world units — should cover the green ground + a little margin. */
 export const WATER_WORLD_EXTENT = 42
 
-/** True if mesh and ancestors are visible (hidden Blender objects must not leave ghost collision). */
+/** Hidden objects in Blender still export sometimes — skip them for collision. */
 function isMeshVisibleInHierarchy(mesh) {
   let o = mesh
   while (o) {
@@ -141,8 +154,8 @@ function isMeshVisibleInHierarchy(mesh) {
 }
 
 /**
- * Mark trees, buildings, props — not terrain/water/grass (walkable ground).
- * Omit `leaf`: foliage submeshes often have loose AABBs and duplicate old positions after moving trees.
+ * Heuristic: mesh name contains “tree” or “house” etc. → solid obstacle. Ground-ish names
+ * are excluded. We deliberately skip `leaf` meshes — their bounding boxes are huge and noisy.
  */
 function isObstacleMesh(mesh) {
   const n = mesh.name || ''
@@ -153,16 +166,13 @@ function isObstacleMesh(mesh) {
   )
 }
 
-/** Palm meshes: tight trunk box so canopy doesn’t block a huge area (world units after island scale). */
 const PALM_COLLISION_MAX_FOOTPRINT = 0.52
 const PALM_COLLISION_MAX_HEIGHT = 2.8
-
-/** House / cottage: shrink full AABB by 20% (×0.8) around center so walls feel less “puffy”. */
 const HOUSE_COLLISION_SCALE = 0.8
 
 /**
- * World-space AABB for character collision.
- * Palm: small trunk box; house/home/cottage: 20% tighter than bounds; else full bounds.
+ * `Box3` is an axis-aligned bounding box — the simplest collision volume for static scenery.
+ * Palms get a short cylinder-ish box; houses shrink slightly so you don’t feel stuck on corners.
  */
 function computeObstacleBox(mesh) {
   const full = new Box3().setFromObject(mesh)
@@ -200,7 +210,7 @@ function computeObstacleBox(mesh) {
 
 const _obstacleSizeCheck = new Vector3()
 
-/** World-space AABB per mesh for character collision (static island). */
+/** Builds a list of obstacle meshes + their `Box3` for Character.jsx. */
 function tagObstacles(scene) {
   scene.updateMatrixWorld(true)
   // Clear previous tags so renamed/removed meshes don’t keep stale collision after GLB updates.
@@ -225,12 +235,13 @@ function tagObstacles(scene) {
   scene.userData.obstacleMeshes = list
 }
 
-/** Props / ship pieces: keep GLB envMapIntensity so HDRI doesn’t flatten wood & metal (barrels, ship, etc.) */
+/** Wood/metal props look dull if we clamp env reflections too hard — skip those by name. */
 function shouldSkipEnvMapClamp(mesh) {
   const n = (mesh.name || '').toLowerCase()
   return /barrel|cannon|crate|ship|pirate|mast|dock|rope|anchor|helm|rudder|deck|plank|wood/i.test(n)
 }
 
+/** Sets cast/receive shadow + slightly tones PBR env on generic meshes. */
 function applyShadowFlags(root) {
   root.traverse((obj) => {
     if (!obj.isMesh) return
@@ -256,8 +267,7 @@ function applyShadowFlags(root) {
 }
 
 /**
- * Loads the island GLB (see islandConfig.js) and swaps the mesh named "water" for Three.js Water
- * (reflections + animated normals). Requires /textures/waternormals.jpg in public.
+ * Main island component: GLTF scene, scaling, water swap, tagging, outlines.
  */
 export default function Island() {
   const { scene } = useGLTF(ISLAND_GLB_URL)
@@ -266,7 +276,7 @@ export default function Island() {
 
   const waterNormals = useLoader(TextureLoader, '/textures/waternormals.jpg')
 
-  // Same placement as before: center XZ, base on ground, scale to fit
+  // Center the model on the origin, sit it on y=0, then scale so its largest dimension ≈ 8 units.
   const { scale } = useMemo(() => {
     const box = new Box3().setFromObject(scene)
     const center = new Vector3()
@@ -291,7 +301,7 @@ export default function Island() {
     }
   }, [scale])
 
-  // Replace Blender water mesh with Three.js Water shader (once)
+  // Swap the mesh named `water` for the Three.js Water example (animated normals + reflection).
   useLayoutEffect(() => {
     if (scene.userData.waterEffectInstalled) return
 
@@ -348,7 +358,7 @@ export default function Island() {
     applyShadowFlags(scene)
   }, [scene, waterNormals, scale])
 
-  // Obstacle bounds (after group scale) + spawn beside rowboat + expose for Character
+  // After the island group has its final scale, compute obstacles + UI tags + spawn point.
   useLayoutEffect(() => {
     if (!groupRef.current) return
     groupRef.current.updateMatrixWorld(true)
@@ -360,12 +370,12 @@ export default function Island() {
     rootScene.userData.characterSpawn = spawn ? spawn.clone() : null
   }, [scene, scale, rootScene])
 
-  // GLTF meshes default to castShadow/receiveShadow = false — run again after async load
+  // useGLTF can resolve after first paint — re-apply shadow/env tweaks when the scene is ready.
   useEffect(() => {
     applyShadowFlags(scene)
   }, [scene])
 
-  // Animate water shader — multiply delta so ripples move slowly
+  // Water shader needs a time uniform; outline materials breathe so props feel “alive”.
   const WATER_TIME_SCALE = 0.12
   useFrame((state, delta) => {
     const w = scene.userData.waterInstance ?? scene.getObjectByName('water')
@@ -383,6 +393,7 @@ export default function Island() {
 
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
+      {/* `primitive` mounts an existing Three object (the GLTF scene) into the R3F tree. */}
       <primitive object={scene} />
     </group>
   )

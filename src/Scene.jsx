@@ -7,14 +7,20 @@ import ClickToMove from './ClickToMove'
 import CharacterOrbitCamera from './CharacterOrbitCamera'
 
 /**
- * Scene: lights, ground, island, character (click-to-move), orbit camera (MMB).
+ * Everything that exists in the 3D world for this portfolio: lights, ground, GLTF island,
+ * animated character, click-to-move, and the orbit camera.
+ *
+ * `moveTargetRef` is a mutable `Vector3` — the character walks toward whatever point the
+ * raycast in `useClickToMove` writes there. Refs are used so we don’t re-render the whole
+ * scene every frame when the target moves.
  */
 export default function Scene() {
   const sunRef = useRef(null)
   const characterRef = useRef(null)
   const moveTargetRef = useRef(new Vector3())
 
-  // Ref can be null on first useEffect tick — retry so shadow camera always configures
+  // Directional lights with shadows need their shadow camera frustum tuned; the ref can be
+  // null on the first paint, so we retry on the next animation frame.
   useLayoutEffect(() => {
     let id
     const apply = () => {
@@ -42,20 +48,20 @@ export default function Scene() {
 
   return (
     <>
-      {/* Ground receives shadows from the island */}
+      {/* Huge plane under the island — catches shadows from props */}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[40, 40]} />
         <meshStandardMaterial color="#3b7d2a" envMapIntensity={0.35} />
       </mesh>
 
-      {/* Keep fill low so HDRI + sun shadows stay visible (IBL otherwise washes shadows) */}
+      {/* Ambient + hemispheric fill so nothing is pure black; keep them low so sun shadows read */}
       <ambientLight intensity={0.06} />
       <hemisphereLight
         skyColor="#a8c8e8"
         groundColor="#2a1f14"
         intensity={0.14}
       />
-      {/* Explicit shadow frustum + target in scene graph (required for stable shadows) */}
+      {/* Main sun: orthographic shadow camera for crisp contact shadows on the island */}
       <directionalLight
         ref={sunRef}
         position={[18, 28, 14]}
@@ -85,7 +91,7 @@ export default function Scene() {
         castShadow={false}
       />
 
-      {/* HDRI: lower environmentIntensity so directional shadows read on PBR materials */}
+      {/* HDR environment map: lights the scene and draws the sky; intensity kept moderate */}
       <Environment
         files="/assets/qwantani_sunset_puresky_1k.hdr"
         background

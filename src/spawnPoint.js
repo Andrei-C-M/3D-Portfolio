@@ -5,15 +5,18 @@ const _size = /* @__PURE__ */ new Vector3()
 const _toward = /* @__PURE__ */ new Vector3()
 
 /**
- * World-space spawn point beside the small rowboat (`boat-row-large` if present in the GLB).
- * Pushes the point toward island center so the character isn’t inside obstacle bounds.
+ * Picks a starting position for the character near the small boat in the GLB.
+ *
+ * `Box3().setFromObject(mesh)` is Three’s helper for an axis-aligned bounding box around
+ * anything in the scene — super handy for “where is this object roughly?” without manual math.
+ * We nudge the spawn point slightly toward the island center so you don’t spawn inside a prop.
  */
 export function getSpawnNearSmallBoat(islandScene) {
   if (!islandScene) return null
 
   islandScene.updateMatrixWorld(true)
 
-  /** Prefer the named rowboat from this asset */
+  /** Prefer the mesh Blender named exactly `boat-row-large` if it exists */
   let mesh = islandScene.getObjectByName('boat-row-large')
   if (!mesh || !mesh.isMesh) {
     let best = null

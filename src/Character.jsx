@@ -3,9 +3,16 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { Box3, LoopRepeat, Raycaster, Vector3 } from 'three'
 
+/** How fast the character slides on XZ toward the click target (world units per second). */
 const MOVE_SPEED = 1.12
+/** Shrinks the raw GLB so the figure matches the tiny island scale. */
 const CHARACTER_SCALE_FACTOR = 0.08
+/**
+ * Fake “capsule” radius for collision — we only test a single point at COLLISION_HEIGHT,
+ * then inflate the obstacle boxes by this much so you don’t walk through thin walls.
+ */
 const CHARACTER_RADIUS = 0.096
+/** Height of that test point above the feet (roughly chest height). */
 const COLLISION_HEIGHT = 0.256
 
 function findAction(actions, names, regex) {
@@ -14,7 +21,9 @@ function findAction(actions, names, regex) {
 }
 
 /**
- * Ground ray: skip character + obstacles (tree canopy) so we hit terrain below.
+ * Shoot a ray straight down from high above (x,z) to find ground height. We skip meshes
+ * tagged as the character or as obstacles so tree canopies don’t block the ray — the ground
+ * mesh should be hit instead.
  */
 function getGroundHit(x, z, sceneRoot, raycaster, origin, down) {
   origin.set(x, 80, z)
@@ -37,6 +46,7 @@ function snapYToLand(position, sceneRoot, raycaster, origin, down) {
   if (g && !g.isWater) position.y = g.y
 }
 
+/** Simple AABB overlap test using obstacle boxes built in Island.jsx (static scene). */
 function isBlockedAt(x, y, z, obstacleMeshes, tmpBox) {
   const p = new Vector3(x, y + COLLISION_HEIGHT, z)
   for (const mesh of obstacleMeshes) {
@@ -48,7 +58,10 @@ function isBlockedAt(x, y, z, obstacleMeshes, tmpBox) {
   return false
 }
 
-/** Horizontal ray along step — catches thin props */
+/**
+ * Extra ray along the movement step — thin fence posts can fall *between* point samples
+ * on a single frame; a short segment ray catches those edge cases.
+ */
 function segmentHitsObstacle(
   fromX,
   fromY,
@@ -71,8 +84,8 @@ function segmentHitsObstacle(
 }
 
 /**
- * Loads character-male-b.glb, scales to scene, walks toward moveTargetRef on XZ,
- * snaps Y to land only — cannot walk onto water or obstacle meshes (Island tags).
+ * Loads the Mixamo-style character GLB, scales it, and each frame moves the group toward
+ * `moveTargetRef` while staying on land and respecting obstacle boxes from the island.
  */
 export default function Character({ groupRef, moveTargetRef }) {
   const { scene, animations } = useGLTF('/assets/character-male-b.glb')
@@ -86,7 +99,7 @@ export default function Character({ groupRef, moveTargetRef }) {
   const movingRef = useRef(false)
   const walkRef = useRef(null)
   const idleRef = useRef(null)
-  /** If there’s no idle clip, we still “play” walk but freeze it until the player actually moves */
+  /** Some GLBs only ship a walk clip — we play it but freeze `timeScale` until you actually move */
   const walkOnlyRef = useRef(false)
   const stuckTimeRef = useRef(0)
 
@@ -150,7 +163,6 @@ export default function Character({ groupRef, moveTargetRef }) {
     if (idle) {
       idle.reset().setLoop(LoopRepeat, Infinity).fadeIn(0.25).play()
     } else if (walk) {
-      // Without an idle clip, looping walk on load looks like “walking in place”
       walk.reset().setLoop(LoopRepeat, Infinity).play()
       walk.timeScale = 0
     }
@@ -228,7 +240,6 @@ export default function Character({ groupRef, moveTargetRef }) {
         stuckTimeRef.current = 0
       } else {
         stuckTimeRef.current += delta
-        // Target unreachable (collision / gap) — stop walk-in-place loop
         if (stuckTimeRef.current > 0.45) {
           target.copy(pos)
           stuckTimeRef.current = 0

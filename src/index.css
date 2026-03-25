@@ -16,7 +16,10 @@ body {
   font-family: system-ui, sans-serif;
 }
 
-/* About panel (giraffe): desktop drawer + full-screen on narrow viewports */
+/*
+ * Side drawer (SidePanel.jsx): slides from the right, sits above the canvas via z-index.
+ * On phones / tablets we go full width + height; see the @media block at the bottom.
+ */
 .side-panel-drawer {
   position: fixed;
   top: 0;
