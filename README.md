@@ -151,4 +151,37 @@ Eventuellt kan jag använda
 - GSAP eller Framer Motion – för animationer
 - Firebase eller Supabase – om jag vill lägga någon form av backend längre fram
 
+Files and their purpose
 
+src/Scene.jsx
+The 3D world for the project - ground plane, lights, HDRI sky, the island model, the character, click-to-move, and the orbit camera. 
+
+src/Island.jsx
+Loads the island GLB 3D model, scales and centers it, replaces Blender’s water mesh with animated water (I initially made the water in Blender, it used an animated shader, however, I had A LOT of issues trying to import that into threejs), marks meshes for obstacles and clickable popups, adds collision boxes around certain objects (mostly house and palm trees)
+
+src/Character.jsx
+Loads the character GLB, scales and places it, plays walk/idle animations, moves toward the click target on the ground, snaps feet to terrain, and respects obstacle boxes from the island.
+
+src/CharacterOrbitCamera.jsx
+Camera that orbits around the character at a fixed distance (isometric). Middle mouse / two-finger drag rotates; left click stays free for “walk” instead of rotating the view.
+
+src/ClickToMove.jsx
+A small helper that only exists so the click-handling hook runs inside the React Three Fiber Canvas
+
+src/hooks/useClickToMove.js
+Turns mouse/touch clicks into a 3D raycast: if you hit an interactive prop, it opens the right side panel or link; otherwise it sets the walk target on the ground
+
+src/interactionConfig.js
+Maps Blender object names (book, github, giraffe, linkedin) to side-panel IDs. 
+
+src/islandConfig.js
+One constant: the URL/path of the island GLB file so you we can re-export the scene and reload it into the project. Had to do that many times, in order to move things around.
+
+src/spawnPoint.js
+Helper that finds the small boat in the island scene and returns a spawn position near it so the character doesn’t start inside a rock or tree. Still not working properly.
+
+src/context/PanelContext.jsx
+React context for panel and functions to open/close it. 
+
+src/SidePanel.jsx
+The actual slide-out panel: text, images, close button, and Escape key should work to close
